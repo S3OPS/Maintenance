@@ -262,6 +262,7 @@ function prepareWorkbook_(spreadsheet) {
 function resetSheet_(sheet) {
   sheet.getDataRange().breakApart();
   sheet.clear();
+  sheet.clearDataValidations();
   sheet.clearConditionalFormatRules();
   const filter = sheet.getFilter();
   if (filter) {
