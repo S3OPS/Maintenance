@@ -593,10 +593,10 @@ function createDashboardSheet_(spreadsheet) {
   sheet.getRange('J10:O10').merge().setValue('Upcoming PM').setFontWeight('bold').setFontSize(12);
   sheet.getRange(11, 10, 1, 6).setValues([['Room / Space', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status']]);
   applyHeaderStyle_(sheet.getRange(11, 10, 1, 6));
-  const pmSortColumnIndex = 12; // Sort by column M (Days Remaining) within the filtered B:N range.
+  const pmSortColumnIndex = 12; // Sort by the 13th column in the filtered B:N range (Days Remaining).
+  const sortedPmFormula = `SORT(FILTER('Room Inspections'!B4:N250,'Room Inspections'!K4:K250<>"",'Room Inspections'!M4:M250<=${PM_UPCOMING_THRESHOLD_DAYS}),${pmSortColumnIndex},TRUE)`;
   for (let row = 12; row <= 16; row += 1) {
     const offset = row - 11;
-    const sortedPmFormula = `SORT(FILTER('Room Inspections'!B4:N250,'Room Inspections'!K4:K250<>"",'Room Inspections'!M4:M250<=${PM_UPCOMING_THRESHOLD_DAYS}),${pmSortColumnIndex},TRUE)`;
     sheet.getRange(row, 10).setFormula(`=IFERROR(INDEX(${sortedPmFormula},${offset},1),"")`);
     sheet.getRange(row, 11).setFormula(`=IF(J${row}="","",INDEX(${sortedPmFormula},${offset},9))`);
     sheet.getRange(row, 12).setFormula(`=IF(J${row}="","",INDEX(${sortedPmFormula},${offset},10))`);
