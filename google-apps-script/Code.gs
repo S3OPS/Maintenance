@@ -10,6 +10,9 @@ const SHEET_ORDER = [
   'Lists'
 ];
 
+const PM_CYCLE_DAYS = 30;
+const PM_UPCOMING_THRESHOLD_DAYS = 7;
+
 const ROOM_INSPECTION_PM_SECTIONS = [
   {
     section: 'General Room Readiness',
@@ -108,11 +111,11 @@ const ROOM_INSPECTION_PM_SECTIONS = [
 ];
 
 const ROOM_INSPECTIONS = [
-  ['2026-07-16', 'North Tower', '1', '101', 'Pass', 'OK', 'OK', 'OK', 'OK', 'OK', 'Ready for guest turnover', 'Low', 'WO-2401', 'Chief Engineer', '2026-07-16'],
-  ['2026-07-16', 'North Tower', '1', '104', 'Follow-Up', 'Repair', 'OK', 'OK', 'OK', 'OK', 'PTAC making noise overnight', 'Medium', 'WO-2402', 'HVAC Tech', '2026-07-17'],
-  ['2026-07-16', 'South Tower', '2', '214', 'Fail', 'OK', 'Repair', 'OK', 'Repair', 'OK', 'Bathroom leak and damaged vinyl edge', 'High', 'WO-2403', 'Maintenance Supervisor', '2026-07-16'],
-  ['2026-07-16', 'South Tower', '3', '318', 'Pass', 'OK', 'OK', 'OK', 'OK', 'OK', 'Deep-clean complete', 'Low', 'WO-2404', 'Room Inspector', '2026-07-18'],
-  ['2026-07-16', 'Main Building', 'Lobby', 'Fitness', 'Follow-Up', 'OK', 'OK', 'Repair', 'OK', 'OK', 'Treadmill outlet trips under load', 'Medium', 'WO-2405', 'Electrician', '2026-07-18']
+  ['2026-07-16', '101', 'Pass', 'OK', 'OK', 'OK', 'OK', 'Ready for guest turnover', 'Low', 'Chief Engineer', '2026-06-18'],
+  ['2026-07-16', '104', 'Follow-Up', 'Repair', 'OK', 'OK', 'OK', 'PTAC making noise overnight', 'Medium', 'HVAC Tech', '2026-06-25'],
+  ['2026-07-16', '214', 'Fail', 'OK', 'Repair', 'OK', 'Repair', 'Bathroom leak and damaged vinyl edge', 'High', 'Maintenance Supervisor', '2026-06-30'],
+  ['2026-07-16', '318', 'Pass', 'OK', 'OK', 'OK', 'OK', 'Deep-clean complete', 'Low', 'Room Inspector', '2026-06-20'],
+  ['2026-07-16', 'Fitness', 'Follow-Up', 'OK', 'OK', 'Repair', 'OK', 'Treadmill outlet trips under load', 'Medium', 'Electrician', '2026-07-01']
 ];
 
 const INVENTORY_ITEMS = [
@@ -401,14 +404,14 @@ function createRoomInspectionPmSheet_(spreadsheet) {
 
 function createRoomInspectionsSheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Room Inspections');
-  const headers = ['Date', 'Wing/Area', 'Floor', 'Room/Space', 'Inspection Status', 'HVAC', 'Plumbing', 'Electrical', 'Walls/Floors', 'Life Safety', 'Notes', 'Priority', 'Work Order', 'Assigned To', 'Target Date'];
-  applyTitle_(sheet, 'Detailed Room Inspections - Marriott Fairfield', 'Track guest rooms and public spaces with pass/follow-up/fail outcomes and system-level notes.', headers.length);
+  const headers = ['Date', 'Room/Space', 'Inspection Status', 'HVAC', 'Plumbing', 'Electrical', 'Walls/Floors', 'Notes', 'Priority', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status'];
+  applyTitle_(sheet, 'Detailed Room Inspections - Marriott Fairfield', 'Track room inspections, PM intervals, and follow-up status with a 30-day maintenance cycle.', headers.length);
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
   sheet.getRange(4, 1, ROOM_INSPECTIONS.length, headers.length).setValues(ROOM_INSPECTIONS);
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
   applyBodyStyle_(sheet.getRange(4, 1, ROOM_INSPECTIONS.length, headers.length));
   sheet.getRange(3, 1, ROOM_INSPECTIONS.length + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
-  setColumnWidths_(sheet, [100, 130, 70, 100, 130, 90, 90, 90, 100, 90, 300, 90, 100, 130, 100]);
+  setColumnWidths_(sheet, [100, 120, 130, 90, 90, 90, 110, 280, 90, 130, 110, 110, 90, 110]);
   sheet.setFrozenRows(3);
   sheet.getRange(3, 1, ROOM_INSPECTIONS.length + 1, headers.length).createFilter();
 
@@ -416,15 +419,26 @@ function createRoomInspectionsSheet_(spreadsheet) {
   const statusRule = SpreadsheetApp.newDataValidation().requireValueInRange(lists.getRange('A4:A6'), true).setAllowInvalid(false).build();
   const systemRule = SpreadsheetApp.newDataValidation().requireValueInRange(lists.getRange('B4:B6'), true).setAllowInvalid(false).build();
   const priorityRule = SpreadsheetApp.newDataValidation().requireValueInRange(lists.getRange('C4:C7'), true).setAllowInvalid(false).build();
-  sheet.getRange('E4:E250').setDataValidation(statusRule);
-  ['F4:F250', 'G4:G250', 'H4:H250', 'I4:I250', 'J4:J250'].forEach((range) => sheet.getRange(range).setDataValidation(systemRule));
-  sheet.getRange('L4:L250').setDataValidation(priorityRule);
+  sheet.getRange('C4:C250').setDataValidation(statusRule);
+  ['D4:D250', 'E4:E250', 'F4:F250', 'G4:G250'].forEach((range) => sheet.getRange(range).setDataValidation(systemRule));
+  sheet.getRange('I4:I250').setDataValidation(priorityRule);
+  sheet.getRange('K4:K250').setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
+  sheet.getRange('K4:L250').setNumberFormat('yyyy-mm-dd');
+  sheet.getRange('M4:M250').setNumberFormat('0');
+
+  const pmRows = 247;
+  sheet.getRange(4, 12, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",RC[-1]+${PM_CYCLE_DAYS})`);
+  sheet.getRange(4, 13, pmRows, 1).setFormulaR1C1('=IF(RC[-1]="","",RC[-1]-TODAY())');
+  sheet.getRange(4, 14, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",IF(RC[-1]<0,"Overdue",IF(RC[-1]<=${PM_UPCOMING_THRESHOLD_DAYS},"Due Soon","Current")))`);
 
   sheet.setConditionalFormatRules([
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Pass').setBackground('#C6EFCE').setRanges([sheet.getRange('E4:E250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Follow-Up').setBackground('#FFEB9C').setRanges([sheet.getRange('E4:E250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Fail').setBackground('#FFC7CE').setRanges([sheet.getRange('E4:E250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Critical').setBackground('#FFC7CE').setRanges([sheet.getRange('L4:L250')]).build()
+   SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Pass').setBackground('#C6EFCE').setRanges([sheet.getRange('C4:C250')]).build(),
+   SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Follow-Up').setBackground('#FFEB9C').setRanges([sheet.getRange('C4:C250')]).build(),
+   SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Fail').setBackground('#FFC7CE').setRanges([sheet.getRange('C4:C250')]).build(),
+   SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Critical').setBackground('#FFC7CE').setRanges([sheet.getRange('I4:I250')]).build(),
+   SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Current').setBackground('#C6EFCE').setRanges([sheet.getRange('N4:N250')]).build(),
+   SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Due Soon').setBackground('#FFEB9C').setRanges([sheet.getRange('N4:N250')]).build(),
+   SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Overdue').setBackground('#FFC7CE').setRanges([sheet.getRange('N4:N250')]).build()
   ]);
 }
 
@@ -512,15 +526,15 @@ function createTaskSheet_(spreadsheet, sheetName, title, subtitle, rows) {
 
 function createDashboardSheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Dashboard');
-  applyTitle_(sheet, 'Fairfield Maintenance Command Center', 'Interactive dashboard fed by the inspection, inventory, and recurring task sheets.', 7);
-  setColumnWidths_(sheet, [180, 120, 120, 120, 180, 140, 120, 120, 120]);
+  applyTitle_(sheet, 'Fairfield Maintenance Command Center', 'Interactive dashboard fed by the inspection, inventory, and recurring task sheets.', 15);
+  setColumnWidths_(sheet, [180, 120, 120, 120, 180, 140, 120, 120, 120, 150, 130, 110, 100, 110, 110]);
   sheet.setFrozenRows(3);
 
   const metricLabels = [
     ['Inspections Logged', '=COUNTA(\'Room Inspections\'!A4:A250)'],
-    ['Rooms Passed', '=COUNTIF(\'Room Inspections\'!E4:E250,"Pass")'],
-    ['Needs Follow-Up', '=COUNTIF(\'Room Inspections\'!E4:E250,"Follow-Up")'],
-    ['Rooms Failed', '=COUNTIF(\'Room Inspections\'!E4:E250,"Fail")']
+    ['Rooms Passed', '=COUNTIF(\'Room Inspections\'!C4:C250,"Pass")'],
+    ['Needs Follow-Up', '=COUNTIF(\'Room Inspections\'!C4:C250,"Follow-Up")'],
+    ['Rooms Failed', '=COUNTIF(\'Room Inspections\'!C4:C250,"Fail")']
   ];
   metricLabels.forEach((entry, index) => {
     const row = index + 4;
@@ -575,14 +589,31 @@ function createDashboardSheet_(spreadsheet) {
   applyBodyStyle_(sheet.getRange('A12:D14'));
 
   sheet.getRange('F10:G10').merge().setValue('Follow-Up Snapshot').setFontWeight('bold').setFontSize(12);
-  sheet.getRange(11, 6, 1, 2).setValues([['Room / Area', 'Priority']]);
+  sheet.getRange(11, 6, 1, 2).setValues([['Room / Space', 'Priority']]);
   applyHeaderStyle_(sheet.getRange(11, 6, 1, 2));
   for (let row = 12; row <= 16; row += 1) {
     const offset = row - 11;
-    sheet.getRange(row, 6).setFormula(`=IFERROR(INDEX(FILTER('Room Inspections'!D4:D250,'Room Inspections'!E4:E250<>"Pass"),${offset}),"")`);
-    sheet.getRange(row, 7).setFormula(`=IF(F${row}="","",INDEX(FILTER('Room Inspections'!L4:L250,'Room Inspections'!E4:E250<>"Pass"),${offset}))`);
+    sheet.getRange(row, 6).setFormula(`=IFERROR(INDEX(FILTER('Room Inspections'!B4:B250,'Room Inspections'!C4:C250<>"Pass"),${offset}),"")`);
+    sheet.getRange(row, 7).setFormula(`=IF(F${row}="","",INDEX(FILTER('Room Inspections'!I4:I250,'Room Inspections'!C4:C250<>"Pass"),${offset}))`);
   }
   applyBodyStyle_(sheet.getRange('F12:G16'));
+
+  sheet.getRange('J10:O10').merge().setValue('Upcoming PM').setFontWeight('bold').setFontSize(12);
+  sheet.getRange(11, 10, 1, 6).setValues([['Room / Space', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status']]);
+  applyHeaderStyle_(sheet.getRange(11, 10, 1, 6));
+  for (let row = 12; row <= 16; row += 1) {
+    const offset = row - 11;
+    const sortedPmFormula = `SORT(FILTER('Room Inspections'!B4:N250,'Room Inspections'!K4:K250<>"",'Room Inspections'!M4:M250<=${PM_UPCOMING_THRESHOLD_DAYS}),12,TRUE)`;
+    sheet.getRange(row, 10).setFormula(`=IFERROR(INDEX(${sortedPmFormula},${offset},1),"")`);
+    sheet.getRange(row, 11).setFormula(`=IF(J${row}="","",INDEX(${sortedPmFormula},${offset},9))`);
+    sheet.getRange(row, 12).setFormula(`=IF(J${row}="","",INDEX(${sortedPmFormula},${offset},10))`);
+    sheet.getRange(row, 13).setFormula(`=IF(J${row}="","",INDEX(${sortedPmFormula},${offset},11))`);
+    sheet.getRange(row, 14).setFormula(`=IF(J${row}="","",INDEX(${sortedPmFormula},${offset},12))`);
+    sheet.getRange(row, 15).setFormula(`=IF(J${row}="","",INDEX(${sortedPmFormula},${offset},13))`);
+  }
+  sheet.getRange('L12:M16').setNumberFormat('yyyy-mm-dd');
+  sheet.getRange('N12:N16').setNumberFormat('0');
+  applyBodyStyle_(sheet.getRange('J12:O16'));
 
   const barChart = sheet.newChart()
     .asColumnChart()
