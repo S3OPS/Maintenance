@@ -417,14 +417,15 @@ function createRoomInspectionsSheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Room Inspections') || spreadsheet.insertSheet('Room Inspections');
   const headers = ['Date', 'Room/Space', 'Inspection Status', 'HVAC', 'Plumbing', 'Electrical', 'Walls/Floors', 'Notes', 'Priority', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status'];
   applyTitle_(sheet, 'Detailed Room Inspections - Marriott Fairfield', 'Track room inspections, PM intervals, and follow-up status with a 30-day maintenance cycle.', headers.length);
+  const dataWidth = ROOM_INSPECTIONS[0]?.length || headers.length;
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
-  sheet.getRange(4, 1, ROOM_INSPECTIONS.length, headers.length).setValues(ROOM_INSPECTIONS);
+  sheet.getRange(4, 1, ROOM_INSPECTIONS.length, dataWidth).setValues(ROOM_INSPECTIONS);
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
-  applyBodyStyle_(sheet.getRange(4, 1, ROOM_INSPECTIONS.length, headers.length));
-  sheet.getRange(3, 1, ROOM_INSPECTIONS.length + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
+  applyBodyStyle_(sheet.getRange(4, 1, ROOM_INSPECTIONS.length, dataWidth));
+  sheet.getRange(3, 1, ROOM_INSPECTIONS.length + 1, dataWidth).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
   setColumnWidths_(sheet, [100, 120, 130, 90, 90, 90, 110, 280, 90, 130, 110, 110, 90, 110]);
   sheet.setFrozenRows(3);
-  sheet.getRange(3, 1, ROOM_INSPECTIONS.length + 1, headers.length).createFilter();
+  sheet.getRange(3, 1, ROOM_INSPECTIONS.length + 1, dataWidth).createFilter();
 
   const lists = spreadsheet.getSheetByName('Lists');
   const statusRule = SpreadsheetApp.newDataValidation().requireValueInRange(lists.getRange('A4:A6'), true).setAllowInvalid(false).build();
