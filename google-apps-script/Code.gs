@@ -545,8 +545,8 @@ function createDashboardSheet_(spreadsheet) {
 
   // Columns H and I hold the active work order summary metrics.
   const workOrderLabels = [
-    ['Active Work Orders', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"<>Completed")'],
-    ['Work Orders Started', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Work In Progress")'],
+    ['Active Work Orders', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Not Started")+COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Work In Progress")'],
+    ['Work Orders In Progress', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Work In Progress")'],
     ['Work Orders Completed', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Completed")'],
     ['Work Orders Logged', '=COUNTA(\'Active Work Orders\'!A4:A250)']
   ];
