@@ -418,7 +418,7 @@ function createRoomInspectionsSheet_(spreadsheet) {
   const headers = ['Date', 'Room/Space', 'Inspection Status', 'HVAC', 'Plumbing', 'Electrical', 'Walls/Floors', 'Notes', 'Priority', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status'];
   applyTitle_(sheet, 'Detailed Room Inspections - Marriott Fairfield', 'Track room inspections, PM intervals, and follow-up status with a 30-day maintenance cycle.', headers.length);
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
-  sheet.getRange(4, 1, ROOM_INSPECTIONS.length, headers.length).setValues(ROOM_INSPECTIONS);
+  sheet.getRange(4, 1, ROOM_INSPECTIONS.length, ROOM_INSPECTIONS[0].length).setValues(ROOM_INSPECTIONS);
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
   applyBodyStyle_(sheet.getRange(4, 1, ROOM_INSPECTIONS.length, headers.length));
   sheet.getRange(3, 1, ROOM_INSPECTIONS.length + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
