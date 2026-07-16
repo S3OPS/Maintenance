@@ -18,8 +18,8 @@ Google Sheets project for a Fairfield by Marriott maintenance dashboard.
 
 1. Create or open a Google Sheet.
 2. Open **Extensions > Apps Script**.
-3. Replace the default script with the contents of `/home/runner/work/Maintenance/Maintenance/google-apps-script/Code.gs`.
-4. Replace the manifest with `/home/runner/work/Maintenance/Maintenance/google-apps-script/appsscript.json`.
+3. Replace the default script with the contents of `google-apps-script/Code.gs`.
+4. Replace the manifest with `google-apps-script/appsscript.json`.
 5. Save the project.
 6. Run `buildFairfieldMaintenanceProject` once and authorize the script.
 7. Return to the spreadsheet and use the **Maintenance Dashboard** menu to rebuild or refresh the project any time.
