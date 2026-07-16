@@ -456,7 +456,7 @@ function createActiveWorkOrdersSheet_(spreadsheet) {
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Work In Progress').setBackground('#D9EAF7').setRanges([sheet.getRange('F4:F250')]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Completed').setBackground('#C6EFCE').setRanges([sheet.getRange('F4:F250')]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('High').setBackground('#FFC7CE').setRanges([sheet.getRange('D4:D250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Critical').setBackground('#D9EAF7').setRanges([sheet.getRange('D4:D250')]).build()
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Critical').setBackground('#EA9999').setRanges([sheet.getRange('D4:D250')]).build()
   ]);
 }
 
@@ -543,6 +543,7 @@ function createDashboardSheet_(spreadsheet) {
   applyBodyStyle_(sheet.getRange('A4:B7'));
   applyBodyStyle_(sheet.getRange('D4:E7'));
 
+  // Columns H and I hold the active work order summary metrics.
   const workOrderLabels = [
     ['Active Work Orders', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"<>Completed")'],
     ['Work Orders Started', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Work In Progress")'],
