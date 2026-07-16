@@ -1,13 +1,13 @@
 const SHEET_ORDER = [
   'Dashboard',
-  'Room Inspection PM',
-  'Room Inspections',
   'Active Work Orders',
+  'Room Inspections',
   'Parts Inventory',
   'Daily Tasks',
   'Weekly Tasks',
   'Monthly Tasks',
-  'Lists'
+  'Lists',
+  'Room Inspection PM'
 ];
 
 const PM_CYCLE_DAYS = 30;
