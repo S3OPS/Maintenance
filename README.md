@@ -87,9 +87,9 @@ The manifest file sets the timezone and runtime version. It is hidden by default
 
 ## What the script creates
 
-- A dashboard with live formulas and charts fed from the operating sheets.
+- A dashboard with live formulas, charts, and upcoming PM tracking fed from the operating sheets.
 - A printable Fairfield room inspection / PM sheet for guest-room condition checks and corrective action tracking.
-- Inspection tracking for rooms and public spaces with status, system checks, work orders, and priorities.
+- Inspection tracking for rooms and public spaces with status, system checks, PM intervals, and priorities.
 - An active work orders sheet with dropdown validation for room/location and status.
 - Parts inventory with reorder logic and critical-spares tracking.
 - Daily, weekly, and monthly preventive-maintenance task sheets.
