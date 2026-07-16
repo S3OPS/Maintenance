@@ -529,50 +529,39 @@ function createTaskSheet_(spreadsheet, sheetName, title, subtitle, rows) {
 
 function createDashboardSheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Dashboard');
-  applyTitle_(sheet, 'Fairfield Maintenance Command Center', 'Interactive dashboard fed by the inspection, inventory, and recurring task sheets.', 15);
+  applyTitle_(sheet, 'Fairfield Maintenance Command Center', 'Interactive dashboard for open work orders, out-of-order rooms, overdue PMs, and parts availability.', 15);
   setColumnWidths_(sheet, [180, 120, 120, 120, 180, 140, 120, 120, 120, 150, 130, 110, 100, 110, 110]);
   sheet.setFrozenRows(3);
 
-  const metricLabels = [
-    ['Inspections Logged', '=COUNTA(\'Room Inspections\'!A4:A250)'],
-    ['Rooms Passed', '=COUNTIF(\'Room Inspections\'!C4:C250,"Pass")'],
-    ['Needs Follow-Up', '=COUNTIF(\'Room Inspections\'!C4:C250,"Follow-Up")'],
-    ['Rooms Failed', '=COUNTIF(\'Room Inspections\'!C4:C250,"Fail")']
+  const kpiLabels = [
+    ['Open Tickets', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"<>Completed")'],
+    ['Rooms Out of Order', '=IFERROR(COUNTUNIQUE(FILTER(\'Active Work Orders\'!B4:B250,\'Active Work Orders\'!A4:A250<>"",\'Active Work Orders\'!B4:B250<>"",\'Active Work Orders\'!B4:B250<>"Other",\'Active Work Orders\'!F4:F250<>"Completed")),0)'],
+    ['PMs Overdue', '=COUNTIF(\'Room Inspections\'!N4:N250,"Overdue")'],
+    ['Parts On Order', '=COUNTIF(\'Parts Inventory\'!K4:K250,"Reorder")']
   ];
-  metricLabels.forEach((entry, index) => {
+  kpiLabels.forEach((entry, index) => {
     const row = index + 4;
     sheet.getRange(row, 1).setValue(entry[0]).setBackground('#D9EAF7').setFontWeight('bold');
-    sheet.getRange(row, 2).setFormula(entry[1]);
+    sheet.getRange(row, 2).setFormula(entry[1]).setFontSize(18).setFontWeight('bold').setHorizontalAlignment('center');
   });
-
-  const inventoryLabels = [
-    ['Inventory Items', '=COUNTA(\'Parts Inventory\'!A4:A250)'],
-    ['Items to Reorder', '=COUNTIF(\'Parts Inventory\'!K4:K250,"Reorder")'],
-    ['Inventory Value', '=SUMPRODUCT(\'Parts Inventory\'!F4:F250,\'Parts Inventory\'!G4:G250)'],
-    ['Critical Spares', '=COUNTIF(\'Parts Inventory\'!L4:L250,"Yes")']
-  ];
-  inventoryLabels.forEach((entry, index) => {
-    const row = index + 4;
-    sheet.getRange(row, 4).setValue(entry[0]).setBackground('#D9EAF7').setFontWeight('bold');
-    sheet.getRange(row, 5).setFormula(entry[1]);
-  });
-  sheet.getRange('E6').setNumberFormat('$#,##0.00');
   applyBodyStyle_(sheet.getRange('A4:B7'));
-  applyBodyStyle_(sheet.getRange('D4:E7'));
 
-  // Columns H and I hold the active work order summary metrics.
-  const workOrderLabels = [
-    ['Active Work Orders', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Not Started")+COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Work In Progress")'],
-    ['Work Orders In Progress', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Work In Progress")'],
-    ['Work Orders Completed', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Completed")'],
-    ['Work Orders Logged', '=COUNTA(\'Active Work Orders\'!A4:A250)']
-  ];
-  workOrderLabels.forEach((entry, index) => {
-    const row = index + 4;
-    sheet.getRange(row, 8).setValue(entry[0]).setBackground('#D9EAF7').setFontWeight('bold');
-    sheet.getRange(row, 9).setFormula(entry[1]);
-  });
-  applyBodyStyle_(sheet.getRange('H4:I7'));
+  sheet.getRange('D4:E4').merge().setValue('Out of Order Rooms').setFontWeight('bold').setFontSize(12);
+  sheet.getRange('D5').setFormula(`=IFERROR(QUERY('Active Work Orders'!B4:F250,"select B, count(B) where B is not null and B <> 'Other' and F <> 'Completed' group by B order by count(B) desc limit 5 label B 'Room / Location', count(B) 'Open Tickets'",0),{"Room / Location","Open Tickets"})`);
+  applyHeaderStyle_(sheet.getRange('D4:E4'));
+  applyHeaderStyle_(sheet.getRange('D5:E5'));
+  applyBodyStyle_(sheet.getRange('D5:E9'));
+  sheet.getRange('D5:E9').setHorizontalAlignment('center');
+
+  const roomChart = sheet.newChart()
+    .asBarChart()
+    .addRange(sheet.getRange('D5:E9'))
+    .setPosition(4, 7, 0, 0)
+    .setOption('title', 'Out of Order Rooms by Open Ticket Count')
+    .setOption('legend', { position: 'none' })
+    .setOption('chartArea', { width: '70%', height: '70%' })
+    .build();
+  sheet.insertChart(roomChart);
 
   sheet.getRange('A10:D10').merge().setValue('Recurring Task Completion').setFontWeight('bold').setFontSize(12);
   sheet.getRange(11, 1, 1, 4).setValues([['Cadence', 'Completed', 'Total', 'Completion %']]);
@@ -618,21 +607,4 @@ function createDashboardSheet_(spreadsheet) {
   sheet.getRange('L12:M16').setNumberFormat('yyyy-mm-dd');
   sheet.getRange('N12:N16').setNumberFormat('0');
   applyBodyStyle_(sheet.getRange('J12:O16'));
-
-  const barChart = sheet.newChart()
-    .asColumnChart()
-    .addRange(sheet.getRange('A11:C14'))
-    .setPosition(17, 1, 0, 0)
-    .setOption('title', 'Task Completion by Cadence')
-    .setOption('legend', { position: 'top' })
-    .build();
-  sheet.insertChart(barChart);
-
-  const pieChart = sheet.newChart()
-    .asPieChart()
-    .addRange(sheet.getRange('A4:B7'))
-    .setPosition(17, 5, 0, 0)
-    .setOption('title', 'Inspection Status Mix')
-    .build();
-  sheet.insertChart(pieChart);
 }
