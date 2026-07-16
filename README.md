@@ -6,6 +6,7 @@ Google Sheets project for a Fairfield by Marriott maintenance dashboard.
 
 - `google-apps-script/Code.gs` builds a full Google Sheets workbook with:
   - Dashboard
+  - Printable room inspection / PM sheet
   - Detailed room inspections
   - Parts inventory
   - Daily tasks
@@ -63,8 +64,9 @@ The manifest file sets the timezone and runtime version. It is hidden by default
 ### Step 7 — Return to the spreadsheet
 
 1. Switch back to the Google Sheets tab (or go to [sheets.google.com](https://sheets.google.com) and reopen the file).
-2. You will see seven sheets created along the bottom tab bar:
+2. You will see eight sheets created along the bottom tab bar:
    - **Dashboard** — live summary metrics and charts
+   - **Room Inspection PM** — printable Fairfield guest-room inspection / PM checklist
    - **Room Inspections** — per-room pass/fail tracking
    - **Parts Inventory** — stock levels and reorder alerts
    - **Daily Tasks**, **Weekly Tasks**, **Monthly Tasks** — PM task lists
@@ -84,6 +86,7 @@ The manifest file sets the timezone and runtime version. It is hidden by default
 ## What the script creates
 
 - A dashboard with live formulas and charts fed from the operating sheets.
+- A printable Fairfield room inspection / PM sheet for guest-room condition checks and corrective action tracking.
 - Inspection tracking for rooms and public spaces with status, system checks, work orders, and priorities.
 - Parts inventory with reorder logic and critical-spares tracking.
 - Daily, weekly, and monthly preventive-maintenance task sheets.

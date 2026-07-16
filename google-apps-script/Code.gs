@@ -1,11 +1,109 @@
 const SHEET_ORDER = [
   'Dashboard',
+  'Room Inspection PM',
   'Room Inspections',
   'Parts Inventory',
   'Daily Tasks',
   'Weekly Tasks',
   'Monthly Tasks',
   'Lists'
+];
+
+const ROOM_INSPECTION_PM_SECTIONS = [
+  {
+    section: 'General Room Readiness',
+    items: [
+      ['Room presentation', 'Room is clean, odor-free, well-lit, and guest-ready with no visible clutter or trash.'],
+      ['Bedding and mattress', 'Linens are fresh, dry, tight, and free of stains or tears; mattress, box spring, and headboard are secure and clean.'],
+      ['Casegoods and upholstery', 'Desk, chair, nightstand, sofa, and other furniture are dust-free, stable, and free of chips, burns, stains, or loose hardware.'],
+      ['Windows and treatments', 'Windows, sheers, blackout curtains, and blinds open and close smoothly; fabric is clean and undamaged.'],
+      ['Closet and storage', 'Closet or wardrobe is clean and organized; hangers, luggage rack, and shelves are present and secure.'],
+      ['Brand amenities', 'Coffee maker, cups, ice bucket, hair dryer, safe, iron, and board are present and functional when equipped in the room type.']
+    ]
+  },
+  {
+    section: 'HVAC / Climate Control',
+    items: [
+      ['PTAC or HVAC power', 'Unit powers on and responds correctly to the thermostat or control settings.'],
+      ['Heating and cooling', 'Heating and cooling modes produce strong, even airflow and reach set temperature without delay.'],
+      ['Filter and grille', 'Return grille, filter, and cabinet are clean, secured, and free of heavy dust build-up.'],
+      ['Noise and vibration', 'Unit runs quietly with no rattles, grinding, odor, or abnormal vibration.'],
+      ['Condensate and leaks', 'No water intrusion, condensate overflow, or staining is present around the unit.']
+    ]
+  },
+  {
+    section: 'Electrical / Lighting / Technology',
+    items: [
+      ['Room lighting', 'Entry, bedside, desk, vanity, and bath lighting all operate correctly with working switches or dimmers.'],
+      ['Outlets and USB ports', 'All outlets, USB ports, and charging stations energize properly and are securely mounted.'],
+      ['GFCI protection', 'Bathroom and vanity GFCI outlets trip and reset properly; covers and faceplates are intact.'],
+      ['TV and remote', 'Television powers on, channels or streaming input work, and the remote operates correctly.'],
+      ['Telephone and connectivity', 'Room phone, data port, or posted Wi-Fi information is present and usable when applicable.'],
+      ['Cords and plugs', 'Power cords, plugs, and lamp wiring are undamaged, secured, and not creating a hazard.']
+    ]
+  },
+  {
+    section: 'Plumbing / Bathroom',
+    items: [
+      ['Sink faucet and drain', 'Hot and cold water operate correctly, pressure is acceptable, and the sink drains without leaking or backing up.'],
+      ['Toilet operation', 'Toilet flushes, refills, and seats properly with no rocking, staining, or hidden leaks.'],
+      ['Tub or shower', 'Tub, shower, head, curtain or door, grout, caulk, and drain are clean, intact, and leak-free.'],
+      ['Vanity and mirror', 'Countertop, backsplash, mirror, sink basin, and vanity surfaces are clean and damage-free.'],
+      ['Exhaust fan', 'Bathroom fan vents properly and is free of excessive dust, noise, or damage.'],
+      ['Water temperature', 'Water temperature is consistent and acceptable at the sink and shower.'],
+      ['Plumbing leaks', 'No visible leaks are present under the sink, around the toilet, or at wall penetrations.']
+    ]
+  },
+  {
+    section: 'Walls / Ceiling / Trim',
+    items: [
+      ['Walls and paint', 'Walls, wallpaper, and paint are free of holes, stains, peeling, scuffs, and visible patching issues.'],
+      ['Ceiling and vents', 'Ceiling, sprinkler escutcheons, diffusers, and vents are clean with no water marks or cracks.'],
+      ['Trim and caulk', 'Baseboards, corner beads, trim, and caulk lines are intact, sealed, and finished cleanly.'],
+      ['Artwork and mirrors', 'Artwork, mirrors, and décor are straight, secure, and free of chips, cracks, or fading.'],
+      ['Bathroom wall finish', 'Tile, grout, and wall finish in the bathroom are clean, sealed, and free of mold, mildew, or damage.']
+    ]
+  },
+  {
+    section: 'Floors / Baseboards / Thresholds',
+    items: [
+      ['Floor surface', 'Carpet, tile, LVT/VCT, or other floor finish is clean, dry, and in good condition.'],
+      ['Floor damage', 'No burns, stains, cracks, lifted edges, loose tiles, or damaged seams are present.'],
+      ['Transitions and thresholds', 'Door thresholds, transitions, rugs, and mats are secure and do not create a trip hazard.'],
+      ['Baseboards and corners', 'Baseboards and corners are secure, clean, and free of gouges or separation.'],
+      ['Under furniture', 'Area under the bed, behind the door, and behind furniture is clean and free of debris.']
+    ]
+  },
+  {
+    section: 'Doors / Locks / Security',
+    items: [
+      ['Entry door operation', 'Entry door closes, latches, and self-closes properly without binding or slamming.'],
+      ['Deadbolt and swing bar', 'Deadbolt, security latch, and related hardware function smoothly and securely.'],
+      ['Peephole and viewer', 'Peephole or viewer is clear, secure, and properly aligned.'],
+      ['Door seals and sweep', 'Door seals, sweep, hinges, frame, and closer are intact with no obvious light or sound gaps.'],
+      ['Bathroom and closet doors', 'Bathroom, closet, and connecting doors open, close, and latch properly.'],
+      ['Window and patio security', 'Window locks, secondary latches, and balcony or patio doors operate correctly when present.']
+    ]
+  },
+  {
+    section: 'Safety / Life Safety / Guest Security',
+    items: [
+      ['Smoke detector', 'Smoke detector is present, unobstructed, and appears powered and functional.'],
+      ['Sprinkler head', 'Sprinkler head and escutcheon are unobstructed and free of damage or paint.'],
+      ['Emergency information', 'Emergency evacuation instructions, room phone info, and safety signage are present and legible.'],
+      ['Immediate hazards', 'No exposed wiring, broken glass, damaged outlets, or other immediate safety hazards are present.'],
+      ['Egress path', 'Primary exit path from the room is clear and unobstructed.']
+    ]
+  },
+  {
+    section: 'Final PM / Closeout',
+    items: [
+      ['Deficiency log', 'All deficiencies are documented with the proper work order number or follow-up note.'],
+      ['Parts and materials', 'Parts, materials, or vendor support required for repair are identified and ordered if needed.'],
+      ['Room status', 'Room status is clearly marked as Ready, Follow-Up, or Out of Order.'],
+      ['Inspector sign-off', 'Inspector name, date, and supervisor review are completed before the room is returned to service.']
+    ]
+  }
 ];
 
 const ROOM_INSPECTIONS = [
@@ -56,6 +154,7 @@ function buildFairfieldMaintenanceProject() {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.create('Fairfield Maintenance Dashboard');
   prepareWorkbook_(spreadsheet);
   createListsSheet_(spreadsheet);
+  createRoomInspectionPmSheet_(spreadsheet);
   createRoomInspectionsSheet_(spreadsheet);
   createInventorySheet_(spreadsheet);
   createTaskSheet_(spreadsheet, 'Daily Tasks', 'Daily Maintenance Tasks', 'Use this sheet to manage daily building checks, hotel operations walk-throughs, and shift handoffs.', DAILY_TASKS);
@@ -141,6 +240,90 @@ function createListsSheet_(spreadsheet) {
   applyBodyStyle_(sheet.getRange(4, 1, values.length - 1, 5));
   setColumnWidths_(sheet, [150, 150, 120, 150, 120]);
   sheet.hideSheet();
+}
+
+function createRoomInspectionPmSheet_(spreadsheet) {
+  const sheet = spreadsheet.getSheetByName('Room Inspection PM');
+  const headers = ['Inspection Item', 'Fairfield Standard', 'Result', 'Notes / Deficiencies', 'Corrective Action'];
+  const resultOptions = ['Pass', 'Follow-Up', 'Fail', 'N/A'];
+
+  applyTitle_(
+    sheet,
+    'Marriott Fairfield Room Inspection / PM',
+    'Printable guest-room inspection sheet tailored to Fairfield standards for guest-ready presentation, PM follow-up, and detailed corrective action tracking.',
+    headers.length
+  );
+
+  sheet.getRange('A4').setValue('Date');
+  sheet.getRange('B4:C4').merge().setValue('');
+  sheet.getRange('D4').setValue('Inspector');
+  sheet.getRange('E4').setValue('');
+  sheet.getRange('A5').setValue('Property / Wing');
+  sheet.getRange('B5:C5').merge().setValue('');
+  sheet.getRange('D5').setValue('Room / Floor');
+  sheet.getRange('E5').setValue('');
+  sheet.getRange('A6').setValue('Room Type');
+  sheet.getRange('B6:C6').merge().setValue('');
+  sheet.getRange('D6').setValue('Work Order');
+  sheet.getRange('E6').setValue('');
+  sheet.getRange('A7').setValue('Occupancy');
+  sheet.getRange('B7:C7').merge().setValue('');
+  sheet.getRange('D7').setValue('Status / Target');
+  sheet.getRange('E7').setValue('');
+
+  applyHeaderStyle_(sheet.getRange('A4:A7'));
+  applyHeaderStyle_(sheet.getRange('D4:D7'));
+  applyBodyStyle_(sheet.getRange('B4:C7'));
+  applyBodyStyle_(sheet.getRange('E4:E7'));
+  sheet.getRange('A4:E7').setBorder(true, true, true, true, true, true, '#D9D9D9', SpreadsheetApp.BorderStyle.SOLID);
+
+  sheet.getRange(9, 1, 1, headers.length).setValues([headers]);
+  applyHeaderStyle_(sheet.getRange(9, 1, 1, headers.length));
+
+  const resultRule = SpreadsheetApp.newDataValidation().requireValueInList(resultOptions, true).setAllowInvalid(false).build();
+  const resultRanges = [];
+  const sectionRows = [];
+  let row = 10;
+
+  ROOM_INSPECTION_PM_SECTIONS.forEach((section) => {
+    sectionRows.push(row);
+    sheet.getRange(row, 1, 1, headers.length).merge();
+    sheet.getRange(row, 1).setValue(section.section);
+    sheet.getRange(row, 1, 1, headers.length)
+      .setBackground('#1F4E78')
+      .setFontColor('#FFFFFF')
+      .setFontWeight('bold')
+      .setVerticalAlignment('middle');
+    row += 1;
+
+    section.items.forEach((item) => {
+      sheet.getRange(row, 1, 1, headers.length).setValues([[item[0], item[1], '', '', '']]);
+      resultRanges.push(sheet.getRange(row, 3));
+      row += 1;
+    });
+  });
+
+  const lastRow = row - 1;
+  applyBodyStyle_(sheet.getRange(10, 1, lastRow - 9, headers.length));
+  sheet.getRange(10, 1, lastRow - 9, headers.length).setWrap(true).setVerticalAlignment('top');
+  resultRanges.forEach((range) => range.setDataValidation(resultRule).setHorizontalAlignment('center'));
+
+  sheet.setFrozenRows(9);
+  sheet.setHiddenGridlines(true);
+  setColumnWidths_(sheet, [170, 230, 90, 230, 180]);
+  sheet.setRowHeight(1, 28);
+  sheet.setRowHeight(2, 42);
+  sheet.setRowHeights(4, 4, 24);
+  sheet.setRowHeight(9, 28);
+  sheet.autoResizeRows(10, lastRow - 9);
+  sectionRows.forEach((sectionRow) => sheet.setRowHeight(sectionRow, 26));
+
+  sheet.setConditionalFormatRules([
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Pass').setBackground('#C6EFCE').setRanges([sheet.getRange('C10:C250')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Follow-Up').setBackground('#FFEB9C').setRanges([sheet.getRange('C10:C250')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Fail').setBackground('#FFC7CE').setRanges([sheet.getRange('C10:C250')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('N/A').setBackground('#E7E6E6').setRanges([sheet.getRange('C10:C250')]).build()
+  ]);
 }
 
 function createRoomInspectionsSheet_(spreadsheet) {
