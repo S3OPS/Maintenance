@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fairfield Maintenance Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; background: #f0f4f8; color: #1a1a1a; min-height: 100vh; }
+
+    /* ---- HEADER ---- */
+    header { background: #1F4E78; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .header-logo { font-size: 26px; }
+    .header-text h1 { font-size: 18px; font-weight: 700; line-height: 1.2; }
+    .header-text p  { font-size: 11px; opacity: 0.75; margin-top: 2px; }
+    .header-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    #save-indicator { font-size: 11px; color: #81d883; opacity: 0; transition: opacity 0.4s; white-space: nowrap; }
+    #save-indicator.show { opacity: 1; }
+
+    /* ---- TABS ---- */
+    .tabs { background: #163B5E; display: flex; overflow-x: auto; padding: 0 24px; gap: 2px; }
+    .tab-btn { background: transparent; border: none; color: #9fc3e0; padding: 9px 15px; cursor: pointer; font-size: 12px; white-space: nowrap; border-bottom: 3px solid transparent; font-family: inherit; transition: color 0.15s, border-color 0.15s; }
+    .tab-btn:hover { color: #fff; }
+    .tab-btn.active { color: #fff; border-bottom-color: #5BB8F5; font-weight: 600; }
+
+    /* ---- TAB CONTENT ---- */
+    .tab-content { display: none; padding: 20px 24px; }
+    .tab-content.active { display: block; }
+
+    /* ---- BUTTONS ---- */
+    .btn { background: #1F4E78; color: #fff; border: none; padding: 7px 13px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap; font-family: inherit; transition: background 0.15s; }
+    .btn:hover { background: #163B5E; }
+    .btn.outline { background: #fff; color: #1F4E78; border: 1.5px solid #1F4E78; }
+    .btn.outline:hover { background: #e8f0fb; }
+    .btn.danger { background: #d32f2f; }
+    .btn.danger:hover { background: #b71c1c; }
+
+    /* ---- PAGE TOOLBAR ---- */
+    .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .toolbar-title { font-size: 15px; font-weight: 700; color: #1F4E78; flex: 1; min-width: 200px; }
+    .subtitle { color: #666; font-size: 12px; margin-bottom: 14px; }
+
+    /* ---- SECTION HEADING ---- */
+    .section-heading { font-size: 12px; font-weight: 700; color: #1F4E78; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; border-bottom: 2px solid #c9dff2; padding-bottom: 5px; }
+
+    /* ---- DASHBOARD METRIC CARDS ---- */
+    .cards-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .card { background: #fff; border-radius: 6px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.09); border-left: 4px solid #1F4E78; }
+    .card.green  { border-left-color: #388e3c; }
+    .card.amber  { border-left-color: #f57c00; }
+    .card.red    { border-left-color: #d32f2f; }
+    .card-label  { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #666; margin-bottom: 6px; }
+    .card-value  { font-size: 28px; font-weight: 700; color: #1F4E78; }
+    .card.green .card-value { color: #2e7d32; }
+    .card.amber .card-value { color: #e65100; }
+    .card.red   .card-value { color: #c62828; }
+
+    /* ---- DASHBOARD BOTTOM PANELS ---- */
+    .dash-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .dash-panel  { background: #fff; border-radius: 6px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.09); }
+
+    .progress-item { margin-bottom: 14px; }
+    .progress-top  { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+    .progress-bar  { height: 14px; background: #e0e0e0; border-radius: 7px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #1F4E78; border-radius: 7px; transition: width 0.4s; }
+
+    .mini-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .mini-table th { background: #1F4E78; color: #fff; padding: 7px 10px; text-align: left; }
+    .mini-table td { border: 1px solid #e0e0e0; padding: 6px 10px; }
+    .mini-table tr:nth-child(even) td { background: #f5f8fc; }
+
+    /* ---- DATA TABLES ---- */
+    .table-wrapper { overflow-x: auto; background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.09); }
+    table.data-table { border-collapse: collapse; width: 100%; }
+    table.data-table th { background: #1F4E78; color: #fff; padding: 8px 6px; text-align: center; white-space: nowrap; font-size: 11px; font-weight: 700; position: sticky; top: 0; z-index: 2; }
+    table.data-table td { border: 1px solid #ddd; padding: 0; vertical-align: middle; }
+    table.data-table tr:nth-child(even) td { background: #f7f9fc; }
+    table.data-table tr:hover td { background: #edf3fa !important; }
+    th.del-col, td.del-col { width: 34px; min-width: 34px; text-align: center; padding: 4px !important; }
+
+    td input[type=text],
+    td input[type=number],
+    td input[type=date] {
+      width: 100%; border: none; background: transparent; font-family: inherit;
+      font-size: 12px; padding: 6px 7px; color: inherit; min-width: 60px;
+    }
+    td textarea {
+      width: 100%; border: none; background: transparent; font-family: inherit;
+      font-size: 12px; padding: 6px 7px; color: inherit; resize: vertical;
+      min-height: 36px; min-width: 120px;
+    }
+    td select {
+      width: 100%; border: none; background: transparent; font-family: inherit;
+      font-size: 12px; padding: 6px 7px; cursor: pointer;
+    }
+    td input:focus, td textarea:focus, td select:focus {
+      background: #fffde7 !important; outline: 2px solid #1F4E78; outline-offset: -2px;
+    }
+    td.computed-cell { padding: 6px 8px; font-size: 12px; text-align: center; font-weight: 600; }
+
+    .btn-del { background: none; border: none; color: #c62828; cursor: pointer; font-size: 15px; padding: 3px 7px; border-radius: 3px; line-height: 1; }
+    .btn-del:hover { background: #ffebee; }
+
+    /* ---- STATUS / PRIORITY COLOUR CLASSES ---- */
+    .s-pass,       .s-complete    { background: #C6EFCE !important; color: #1b5e20; }
+    .s-followup,   .s-inprogress  { background: #FFEB9C !important; color: #7d5c00; }
+    .s-fail,       .s-deferred    { background: #FFC7CE !important; color: #9c0006; }
+    .s-reorder                    { background: #FFEB9C !important; color: #7d5c00; }
+    .s-ok                         { color: #2e7d32; }
+    .p-high, .p-critical          { background: #FFC7CE !important; color: #9c0006; }
+    .p-medium                     { background: #FFEB9C !important; color: #7d5c00; }
+    .p-low                        { background: #C6EFCE !important; color: #1b5e20; }
+    .crit-yes                     { background: #D9EAF7 !important; color: #1F4E78; font-weight: 600; }
+
+    footer { text-align: center; padding: 14px 24px; color: #888; font-size: 11px; border-top: 1px solid #ddd; margin-top: 8px; }
+    footer a { color: #1F4E78; }
+
+    @media (max-width: 700px) {
+      .dash-bottom { grid-template-columns: 1fr; }
+      .header-actions { width: 100%; justify-content: flex-end; }
+    }
+
+    @media print {
+      header, .tabs, .toolbar .btn, footer { display: none !important; }
+      .tab-content { display: block !important; padding: 0; }
+      .table-wrapper { box-shadow: none; overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">🏨</div>
+  <div class="header-text">
+    <h1>Fairfield Maintenance Command Center</h1>
+    <p>Fairfield by Marriott — Hotel Maintenance Operations</p>
+  </div>
+  <div class="header-actions">
+    <span id="save-indicator">✓ Saved</span>
+    <button class="btn outline" onclick="importData()">⬆ Import JSON</button>
+    <button class="btn outline" onclick="exportData()">⬇ Export JSON</button>
+    <button class="btn danger" onclick="resetData()">↺ Reset to Default</button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="dashboard"        role="tab" onclick="switchTab('dashboard')">📊 Dashboard</button>
+  <button class="tab-btn"        data-tab="room-inspections" role="tab" onclick="switchTab('room-inspections')">🔍 Room Inspections</button>
+  <button class="tab-btn"        data-tab="parts-inventory"  role="tab" onclick="switchTab('parts-inventory')">📦 Parts Inventory</button>
+  <button class="tab-btn"        data-tab="daily-tasks"      role="tab" onclick="switchTab('daily-tasks')">📋 Daily Tasks</button>
+  <button class="tab-btn"        data-tab="weekly-tasks"     role="tab" onclick="switchTab('weekly-tasks')">📅 Weekly Tasks</button>
+  <button class="tab-btn"        data-tab="monthly-tasks"    role="tab" onclick="switchTab('monthly-tasks')">🗓 Monthly Tasks</button>
+</nav>
+
+<main>
+
+  <div id="tab-dashboard" class="tab-content active" role="tabpanel">
+    <!-- Rendered by JS -->
+  </div>
+
+  <div id="tab-room-inspections" class="tab-content" role="tabpanel">
+    <div class="toolbar">
+      <span class="toolbar-title">Detailed Room Inspections — Marriott Fairfield</span>
+      <button class="btn" onclick="addRow('roomInspections')">+ Add Row</button>
+      <button class="btn outline" onclick="window.print()">🖨 Print</button>
+    </div>
+    <p class="subtitle">Track guest rooms and public spaces with pass / follow-up / fail outcomes and system-level notes. Click any cell to edit; changes are saved automatically.</p>
+    <div class="table-wrapper"><table class="data-table" id="tbl-roomInspections"></table></div>
+  </div>
+
+  <div id="tab-parts-inventory" class="tab-content" role="tabpanel">
+    <div class="toolbar">
+      <span class="toolbar-title">Parts Inventory</span>
+      <button class="btn" onclick="addRow('inventory')">+ Add Row</button>
+      <button class="btn outline" onclick="window.print()">🖨 Print</button>
+    </div>
+    <p class="subtitle">Manage critical spares, reorder triggers, vendors, and storage locations. The Reorder Status column updates automatically from On Hand vs Min Level.</p>
+    <div class="table-wrapper"><table class="data-table" id="tbl-inventory"></table></div>
+  </div>
+
+  <div id="tab-daily-tasks" class="tab-content" role="tabpanel">
+    <div class="toolbar">
+      <span class="toolbar-title">Daily Maintenance Tasks</span>
+      <button class="btn" onclick="addRow('dailyTasks')">+ Add Row</button>
+      <button class="btn outline" onclick="window.print()">🖨 Print</button>
+    </div>
+    <p class="subtitle">Manage daily building checks, hotel operations walk-throughs, and shift handoffs.</p>
+    <div class="table-wrapper"><table class="data-table" id="tbl-dailyTasks"></table></div>
+  </div>
+
+  <div id="tab-weekly-tasks" class="tab-content" role="tabpanel">
+    <div class="toolbar">
+      <span class="toolbar-title">Weekly Maintenance Tasks</span>
+      <button class="btn" onclick="addRow('weeklyTasks')">+ Add Row</button>
+      <button class="btn outline" onclick="window.print()">🖨 Print</button>
+    </div>
+    <p class="subtitle">Plan recurring weekly preventive maintenance work.</p>
+    <div class="table-wrapper"><table class="data-table" id="tbl-weeklyTasks"></table></div>
+  </div>
+
+  <div id="tab-monthly-tasks" class="tab-content" role="tabpanel">
+    <div class="toolbar">
+      <span class="toolbar-title">Monthly Maintenance Tasks</span>
+      <button class="btn" onclick="addRow('monthlyTasks')">+ Add Row</button>
+      <button class="btn outline" onclick="window.print()">🖨 Print</button>
+    </div>
+    <p class="subtitle">Track higher-touch preventive maintenance and inventory routines.</p>
+    <div class="table-wrapper"><table class="data-table" id="tbl-monthlyTasks"></table></div>
+  </div>
+
+</main>
+
+<footer>
+  Fairfield by Marriott Maintenance Dashboard &nbsp;·&nbsp;
+  Data is stored in your browser's local storage — use
+  <a href="#" onclick="exportData(); return false;">Export JSON</a> to back it up and
+  <a href="#" onclick="importData(); return false;">Import JSON</a> to restore it on another device.
+</footer>
+
+<script>
+// ===================================================================
+// DEFAULT DATA  (mirrors google-apps-script/Code.gs constants)
+// ===================================================================
+const DEFAULT_DATA = {
+  roomInspections: [
+    ['2026-07-16','North Tower','1','101','Pass','OK','OK','OK','OK','OK','Ready for guest turnover','Low','WO-2401','Chief Engineer','2026-07-16'],
+    ['2026-07-16','North Tower','1','104','Follow-Up','Repair','OK','OK','OK','OK','PTAC making noise overnight','Medium','WO-2402','HVAC Tech','2026-07-17'],
+    ['2026-07-16','South Tower','2','214','Fail','OK','Repair','OK','Repair','OK','Bathroom leak and damaged vinyl edge','High','WO-2403','Maintenance Supervisor','2026-07-16'],
+    ['2026-07-16','South Tower','3','318','Pass','OK','OK','OK','OK','OK','Deep-clean complete','Low','WO-2404','Room Inspector','2026-07-18'],
+    ['2026-07-16','Main Building','Lobby','Fitness','Follow-Up','OK','OK','Repair','OK','OK','Treadmill outlet trips under load','Medium','WO-2405','Electrician','2026-07-18']
+  ],
+  inventory: [
+    ['INV-001','HVAC','PTAC Filter','Guest Rooms','Grainger',12.5,40,20,30,4,'','Yes','Shelf A1','Quarterly swap item'],
+    ['INV-002','Electrical','LED 9W Bulb','Guest Rooms','Home Depot',3.75,80,60,120,2,'','Yes','Shelf B2','Warm white standard'],
+    ['INV-003','Plumbing','1/2 in Supply Line','Bathrooms','Ferguson',9.95,12,15,20,3,'','No','Shelf C1','Common faucet repair'],
+    ['INV-004','Life Safety','Smoke Detector','Guest Rooms','HD Supply',28,8,10,12,5,'','Yes','Cage 1','Serialized component'],
+    ['INV-005','General','Door Closer','Hallways','Amazon Business',45,6,4,6,2,'','No','Shelf D4','ADA compliant']
+  ],
+  dailyTasks: [
+    ['D-001','Boiler Room','Check boiler pressure, temperature, and leak points','AM Engineer','Daily','Every Day',20,'Complete','2026-07-16','Document readings in log book'],
+    ['D-002','Pool','Verify pool chemistry and equipment alarms','PM Engineer','Daily','Every Day',15,'In Progress','2026-07-15','Coordinate with front desk on closures'],
+    ['D-003','Public Areas','Inspect lobby, corridors, and elevators for lighting or trip hazards','Shift Engineer','Daily','Every Day',25,'Not Started','2026-07-15','Open work order for deficiencies'],
+    ['D-004','Exterior','Check parking lot, signage, and entry doors','Shift Engineer','Daily','Every Day',15,'Complete','2026-07-16','Note weather-related issues']
+  ],
+  weeklyTasks: [
+    ['W-001','Guest Rooms','Test sample of PTAC units and clean return grilles','HVAC Tech','Weekly','Monday',90,'Not Started','2026-07-09','Rotate floors weekly'],
+    ['W-002','Fire Safety','Test emergency lighting and exit signage','Electrician','Weekly','Tuesday',60,'Complete','2026-07-15','Log failures for replacement'],
+    ['W-003','Water Systems','Flush low-use fixtures and inspect for odor','Plumber','Weekly','Wednesday',45,'In Progress','2026-07-10','Focus on out-of-order rooms'],
+    ['W-004','Exterior','Inspect roof drains, downspouts, and grounds irrigation','Grounds/Maintenance','Weekly','Friday',75,'Not Started','2026-07-11','Escalate ponding issues immediately']
+  ],
+  monthlyTasks: [
+    ['M-001','Life Safety','Inspect fire extinguishers and document seal/pressure status','Chief Engineer','Monthly','1st Business Day',75,'Not Started','2026-06-30','Coordinate with vendor if replacement is needed'],
+    ['M-002','Guest Rooms','Deep inspection of 10% of rooms with furnishings checklist','Maintenance Supervisor','Monthly','2nd Week',180,'In Progress','2026-06-20','Use room inspection sheet for findings'],
+    ['M-003','Inventory','Cycle count critical spares and update reorder points','Storeroom Clerk','Monthly','3rd Week',120,'Complete','2026-07-02','Match with purchasing records'],
+    ['M-004','Mechanical','Lubricate motors, bearings, and door hardware','Shift Engineer','Monthly','Last Week',150,'Not Started','2026-06-26','Record used materials']
+  ]
+};
+
+// ===================================================================
+// COLUMN SCHEMAS
+// ===================================================================
+const SCHEMAS = {
+  roomInspections: [
+    { label: 'Date',          type: 'date' },
+    { label: 'Wing / Area',   type: 'text' },
+    { label: 'Floor',         type: 'text' },
+    { label: 'Room / Space',  type: 'text' },
+    { label: 'Status',        type: 'select', options: ['Pass', 'Follow-Up', 'Fail'] },
+    { label: 'HVAC',          type: 'select', options: ['OK', 'Repair', 'Replace'] },
+    { label: 'Plumbing',      type: 'select', options: ['OK', 'Repair', 'Replace'] },
+    { label: 'Electrical',    type: 'select', options: ['OK', 'Repair', 'Replace'] },
+    { label: 'Walls / Floors',type: 'select', options: ['OK', 'Repair', 'Replace'] },
+    { label: 'Life Safety',   type: 'select', options: ['OK', 'Repair', 'Replace'] },
+    { label: 'Notes',         type: 'textarea' },
+    { label: 'Priority',      type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
+    { label: 'Work Order',    type: 'text' },
+    { label: 'Assigned To',   type: 'text' },
+    { label: 'Target Date',   type: 'date' }
+  ],
+  inventory: [
+    { label: 'Part ID',             type: 'text' },
+    { label: 'Category',            type: 'text' },
+    { label: 'Part Name',           type: 'text' },
+    { label: 'Equipment / Area',    type: 'text' },
+    { label: 'Vendor',              type: 'text' },
+    { label: 'Unit Cost ($)',        type: 'number', step: '0.01' },
+    { label: 'On Hand',             type: 'number' },
+    { label: 'Min Level',           type: 'number' },
+    { label: 'Reorder Qty',         type: 'number' },
+    { label: 'Lead Time (Days)',     type: 'number' },
+    { label: 'Reorder Status',      type: 'computed' },
+    { label: 'Critical Item',       type: 'select', options: ['Yes', 'No', ''] },
+    { label: 'Storage Location',    type: 'text' },
+    { label: 'Notes',               type: 'textarea' }
+  ],
+  tasks: [
+    { label: 'Task ID',       type: 'text' },
+    { label: 'Area',          type: 'text' },
+    { label: 'Task',          type: 'textarea' },
+    { label: 'Assigned To',   type: 'text' },
+    { label: 'Frequency',     type: 'text' },
+    { label: 'Due Day / Date',type: 'text' },
+    { label: 'Est. Min',      type: 'number' },
+    { label: 'Status',        type: 'select', options: ['Not Started', 'In Progress', 'Complete', 'Deferred'] },
+    { label: 'Last Completed',type: 'date' },
+    { label: 'Notes',         type: 'textarea' }
+  ]
+};
+SCHEMAS.dailyTasks   = SCHEMAS.tasks;
+SCHEMAS.weeklyTasks  = SCHEMAS.tasks;
+SCHEMAS.monthlyTasks = SCHEMAS.tasks;
+
+// ===================================================================
+// STATE
+// ===================================================================
+let data = {};
+
+// ===================================================================
+// LOCAL STORAGE
+// ===================================================================
+function loadData() {
+  try {
+    const saved = localStorage.getItem('fairfield-maint-v1');
+    data = saved ? JSON.parse(saved) : deepClone(DEFAULT_DATA);
+  } catch (_) {
+    data = deepClone(DEFAULT_DATA);
+  }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('fairfield-maint-v1', JSON.stringify(data));
+  } catch (_) { /* storage quota exceeded — ignore */ }
+  flashSaved();
+}
+
+function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+let _flashTimer = null;
+function flashSaved() {
+  const el = document.getElementById('save-indicator');
+  el.classList.add('show');
+  clearTimeout(_flashTimer);
+  _flashTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// ===================================================================
+// TAB NAVIGATION
+// ===================================================================
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(d => d.classList.toggle('active', d.id === 'tab-' + name));
+  if (name === 'dashboard') renderDashboard();
+}
+
+// ===================================================================
+// DASHBOARD
+// ===================================================================
+function renderDashboard() {
+  const ri  = data.roomInspections;
+  const inv = data.inventory;
+
+  const inspPass     = ri.filter(r => r[4] === 'Pass').length;
+  const inspFollowUp = ri.filter(r => r[4] === 'Follow-Up').length;
+  const inspFail     = ri.filter(r => r[4] === 'Fail').length;
+
+  const invReorder  = inv.filter(r => Number(r[6]) <= Number(r[7])).length;
+  const invValue    = inv.reduce((s, r) => s + (Number(r[5]) || 0) * (Number(r[6]) || 0), 0);
+  const invCritical = inv.filter(r => r[11] === 'Yes').length;
+
+  function stats(arr) {
+    const total = arr.length;
+    const done  = arr.filter(r => r[7] === 'Complete').length;
+    return { total, done, pct: total ? Math.round(done / total * 100) : 0 };
+  }
+
+  const followups = ri.filter(r => r[4] !== 'Pass');
+
+  document.getElementById('tab-dashboard').innerHTML = `
+    <div class="section-heading">Inspection Overview</div>
+    <div class="cards-row">
+      <div class="card">      <div class="card-label">Inspections Logged</div><div class="card-value">${ri.length}</div></div>
+      <div class="card green"><div class="card-label">Rooms Passed</div>      <div class="card-value">${inspPass}</div></div>
+      <div class="card amber"><div class="card-label">Needs Follow-Up</div>   <div class="card-value">${inspFollowUp}</div></div>
+      <div class="card red">  <div class="card-label">Rooms Failed</div>      <div class="card-value">${inspFail}</div></div>
+    </div>
+
+    <div class="section-heading">Inventory Overview</div>
+    <div class="cards-row">
+      <div class="card">      <div class="card-label">Inventory Items</div>   <div class="card-value">${inv.length}</div></div>
+      <div class="card amber"><div class="card-label">Items to Reorder</div>  <div class="card-value">${invReorder}</div></div>
+      <div class="card">      <div class="card-label">Inventory Value</div>   <div class="card-value">$${invValue.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
+      <div class="card">      <div class="card-label">Critical Spares</div>   <div class="card-value">${invCritical}</div></div>
+    </div>
+
+    <div class="dash-bottom">
+      <div class="dash-panel">
+        <div class="section-heading">Task Completion</div>
+        ${mkProgress('Daily',   stats(data.dailyTasks))}
+        ${mkProgress('Weekly',  stats(data.weeklyTasks))}
+        ${mkProgress('Monthly', stats(data.monthlyTasks))}
+      </div>
+      <div class="dash-panel">
+        <div class="section-heading">Follow-Up &amp; Failed Snapshot</div>
+        ${followups.length === 0
+          ? '<p style="color:#666;font-size:12px;padding-top:4px">✅ No follow-up or failed items — all clear!</p>'
+          : `<table class="mini-table">
+               <thead><tr><th>Room / Area</th><th>Status</th><th>Priority</th><th>Notes</th></tr></thead>
+               <tbody>${followups.map(r =>
+                 `<tr><td>${esc(r[3])}</td><td>${esc(r[4])}</td><td>${esc(r[11])}</td><td>${esc(r[10])}</td></tr>`
+               ).join('')}</tbody>
+             </table>`
+        }
+      </div>
+    </div>
+  `;
+}
+
+function mkProgress(label, s) {
+  return `
+    <div class="progress-item">
+      <div class="progress-top"><span>${label}</span><span>${s.done} / ${s.total} (${s.pct}%)</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${s.pct}%"></div></div>
+    </div>`;
+}
+
+// ===================================================================
+// TABLE RENDERING
+// ===================================================================
+function renderTable(key) {
+  const schema = SCHEMAS[key];
+  const rows   = data[key];
+  const table  = document.getElementById('tbl-' + key);
+  if (!table) return;
+
+  const thead = '<thead><tr>' +
+    schema.map(c => `<th>${esc(c.label)}</th>`).join('') +
+    '<th class="del-col">Del</th>' +
+    '</tr></thead>';
+
+  const tbody = '<tbody>' + rows.map((row, ri) => {
+    const cells = schema.map((col, ci) => buildCell(key, row, ri, ci, col)).join('');
+    return `<tr>${cells}<td class="del-col"><button class="btn-del" onclick="deleteRow('${esc(key)}',${ri})" title="Delete row">✕</button></td></tr>`;
+  }).join('') + '</tbody>';
+
+  table.innerHTML = thead + tbody;
+}
+
+function buildCell(key, row, ri, ci, col) {
+  const val = row[ci] !== undefined ? String(row[ci]) : '';
+  const onChange = `updateCell('${esc(key)}',${ri},${ci},this.value)`;
+
+  if (col.type === 'computed') {
+    const onHand   = Number(row[6]) || 0;
+    const minLevel = Number(row[7]) || 0;
+    const status   = onHand <= minLevel ? 'Reorder' : 'OK';
+    return `<td class="computed-cell ${status === 'Reorder' ? 's-reorder' : 's-ok'}">${status}</td>`;
+  }
+
+  let inner;
+  if (col.type === 'select') {
+    const opts = col.options.map(o =>
+      `<option value="${esc(o)}"${o === val ? ' selected' : ''}>${esc(o)}</option>`
+    ).join('');
+    inner = `<select onchange="${onChange}">${opts}</select>`;
+  } else if (col.type === 'textarea') {
+    inner = `<textarea rows="2" oninput="${onChange}">${esc(val)}</textarea>`;
+  } else if (col.type === 'number') {
+    inner = `<input type="number" step="${col.step || '1'}" value="${esc(val)}" oninput="${onChange}">`;
+  } else if (col.type === 'date') {
+    inner = `<input type="date" value="${esc(val)}" onchange="${onChange}">`;
+  } else {
+    inner = `<input type="text" value="${esc(val)}" oninput="${onChange}">`;
+  }
+
+  return `<td class="${cellClass(col, val)}">${inner}</td>`;
+}
+
+function cellClass(col, val) {
+  if (col.type !== 'select') return '';
+  if (col.label === 'Status') {
+    const map = {
+      'Pass': 's-pass', 'Follow-Up': 's-followup', 'Fail': 's-fail',
+      'Complete': 's-complete', 'In Progress': 's-inprogress',
+      'Deferred': 's-deferred', 'Not Started': ''
+    };
+    return map[val] || '';
+  }
+  if (col.label === 'Priority') {
+    const map = { 'Low': 'p-low', 'Medium': 'p-medium', 'High': 'p-high', 'Critical': 'p-critical' };
+    return map[val] || '';
+  }
+  if (col.label === 'Critical Item') return val === 'Yes' ? 'crit-yes' : '';
+  return '';
+}
+
+// ===================================================================
+// DATA MUTATIONS
+// ===================================================================
+function updateCell(key, ri, ci, value) {
+  const col = SCHEMAS[key][ci];
+  data[key][ri][ci] = (col && col.type === 'number')
+    ? (value === '' ? '' : Number(value))
+    : value;
+
+  // Refresh the computed Reorder Status cell when On Hand or Min Level changes
+  if (key === 'inventory' && (ci === 6 || ci === 7)) {
+    const row    = data[key][ri];
+    const status = (Number(row[6]) || 0) <= (Number(row[7]) || 0) ? 'Reorder' : 'OK';
+    const tbl    = document.getElementById('tbl-' + key);
+    if (tbl) {
+      const td = tbl.querySelector('tbody')?.rows[ri]?.cells[10];
+      if (td) { td.className = `computed-cell ${status === 'Reorder' ? 's-reorder' : 's-ok'}`; td.textContent = status; }
+    }
+  }
+
+  // Update TD colour class for select cells without a full re-render
+  if (col && col.type === 'select') {
+    const tbl = document.getElementById('tbl-' + key);
+    if (tbl) {
+      const td = tbl.querySelector('tbody')?.rows[ri]?.cells[ci];
+      if (td) td.className = cellClass(col, value);
+    }
+  }
+
+  saveData();
+  if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+}
+
+function addRow(key) {
+  const today  = new Date().toISOString().slice(0, 10);
+  const schema = SCHEMAS[key];
+  const newRow = schema.map(col => {
+    if (col.type === 'date')     return today;
+    if (col.type === 'number')   return 0;
+    if (col.type === 'select')   return col.options ? col.options[0] : '';
+    if (col.type === 'computed') return '';
+    return '';
+  });
+  data[key].push(newRow);
+  renderTable(key);
+  saveData();
+  // Scroll newly added row into view
+  const wrapper = document.getElementById('tbl-' + key)?.parentElement;
+  if (wrapper) wrapper.scrollTop = wrapper.scrollHeight;
+}
+
+function deleteRow(key, ri) {
+  if (!confirm('Delete this row?')) return;
+  data[key].splice(ri, 1);
+  renderTable(key);
+  saveData();
+  if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+}
+
+// ===================================================================
+// IMPORT / EXPORT / RESET
+// ===================================================================
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'fairfield-maintenance-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData() {
+  const input    = document.createElement('input');
+  input.type     = 'file';
+  input.accept   = '.json,application/json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader   = new FileReader();
+    reader.onload  = ev => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        const required = ['roomInspections','inventory','dailyTasks','weeklyTasks','monthlyTasks'];
+        if (!required.every(k => Array.isArray(imported[k]))) {
+          alert('The selected file does not look like a Fairfield Maintenance export.');
+          return;
+        }
+        data = imported;
+        saveData();
+        renderAll();
+        renderDashboard();
+        alert('Data imported successfully.');
+      } catch (_) {
+        alert('Failed to parse the selected JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function resetData() {
+  if (!confirm('Reset ALL data to the original defaults? This cannot be undone.')) return;
+  data = deepClone(DEFAULT_DATA);
+  saveData();
+  renderAll();
+  renderDashboard();
+}
+
+// ===================================================================
+// UTILITIES
+// ===================================================================
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ===================================================================
+// INIT
+// ===================================================================
+function renderAll() {
+  renderTable('roomInspections');
+  renderTable('inventory');
+  renderTable('dailyTasks');
+  renderTable('weeklyTasks');
+  renderTable('monthlyTasks');
+}
+
+(function init() {
+  loadData();
+  renderAll();
+  renderDashboard();
+})();
+</script>
+</body>
+</html>
