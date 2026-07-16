@@ -301,6 +301,17 @@ function setColumnWidths_(sheet, widths) {
   widths.forEach((width, index) => sheet.setColumnWidth(index + 1, width));
 }
 
+function columnLetter_(columnNumber) {
+  let letter = '';
+  let current = columnNumber;
+  while (current > 0) {
+    const remainder = (current - 1) % 26;
+    letter = String.fromCharCode(65 + remainder) + letter;
+    current = Math.floor((current - 1) / 26);
+  }
+  return letter;
+}
+
 function createListsSheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Lists');
   applyTitle_(sheet, 'Dropdown Lists', 'Hidden lookup values used by the dashboard and operating sheets.', 5);
@@ -429,8 +440,9 @@ function createRoomInspectionsSheet_(spreadsheet) {
   const PM_START_ROW = 4;
   const PM_END_ROW = 250;
   const pmRows = PM_END_ROW - PM_START_ROW + 1;
-  sheet.getRange(PM_START_ROW, 12, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",RC[-1]+${PM_CYCLE_DAYS})`);
   // Next Due Date is derived from Last PM Date plus the 30-day PM cycle.
+  sheet.getRange(PM_START_ROW, 12, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",RC[-1]+${PM_CYCLE_DAYS})`);
+  // Days Remaining subtracts today's date from the Next Due Date.
   sheet.getRange(PM_START_ROW, 13, pmRows, 1).setFormulaR1C1('=IF(RC[-1]="","",RC[-1]-TODAY())');
   sheet.getRange(PM_START_ROW, 14, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",IF(RC[-1]<0,"Overdue",IF(RC[-1]<=${PM_UPCOMING_THRESHOLD_DAYS},"Due Soon","Current")))`);
 
@@ -533,6 +545,25 @@ function createDashboardSheet_(spreadsheet) {
   setColumnWidths_(sheet, [180, 120, 120, 120, 180, 140, 120, 120, 120, 150, 130, 110, 100, 110, 110]);
   sheet.setFrozenRows(3);
 
+  const ACTIVE_WORK_ORDER_LOCATION_COLUMN = 2;
+  const ACTIVE_WORK_ORDER_STATUS_COLUMN = 6;
+  const OUT_OF_ORDER_ROOM_HEADER = 'Room / Location';
+  const OUT_OF_ORDER_TICKET_HEADER = 'Open Tickets';
+  const ROOM_INSPECTIONS_FIRST_COLUMN = 2;
+  const ROOM_INSPECTIONS_LAST_PM_DATE_COLUMN = 11;
+  const ROOM_INSPECTIONS_DAYS_REMAINING_COLUMN = 13;
+  const ROOM_INSPECTIONS_FILTER_END_COLUMN = 14;
+  const ROOM_INSPECTIONS_DAYS_REMAINING_SORT_INDEX = 12;
+
+  const activeWorkOrderLocationColumn = columnLetter_(ACTIVE_WORK_ORDER_LOCATION_COLUMN);
+  const activeWorkOrderStatusColumn = columnLetter_(ACTIVE_WORK_ORDER_STATUS_COLUMN);
+  const outOfOrderRoomsQuery = `select ${activeWorkOrderLocationColumn}, count(${activeWorkOrderLocationColumn}) where ${activeWorkOrderLocationColumn} is not null and ${activeWorkOrderLocationColumn} <> 'Other' and ${activeWorkOrderStatusColumn} <> 'Completed' group by ${activeWorkOrderLocationColumn} order by count(${activeWorkOrderLocationColumn}) desc limit 5 label ${activeWorkOrderLocationColumn} '${OUT_OF_ORDER_ROOM_HEADER}', count(${activeWorkOrderLocationColumn}) '${OUT_OF_ORDER_TICKET_HEADER}'`;
+  const pmFilterStartColumn = columnLetter_(ROOM_INSPECTIONS_FIRST_COLUMN);
+  const pmFilterEndColumn = columnLetter_(ROOM_INSPECTIONS_FILTER_END_COLUMN);
+  const pmLastPmDateColumn = columnLetter_(ROOM_INSPECTIONS_LAST_PM_DATE_COLUMN);
+  const pmDaysRemainingColumn = columnLetter_(ROOM_INSPECTIONS_DAYS_REMAINING_COLUMN);
+  const pmDaysRemainingSortIndex = ROOM_INSPECTIONS_DAYS_REMAINING_SORT_INDEX;
+
   const kpiLabels = [
     ['Open Tickets', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"<>Completed")'],
     ['Rooms Out of Order', '=IFERROR(COUNTUNIQUE(FILTER(\'Active Work Orders\'!B4:B250,\'Active Work Orders\'!A4:A250<>"",\'Active Work Orders\'!B4:B250<>"",\'Active Work Orders\'!B4:B250<>"Other",\'Active Work Orders\'!F4:F250<>"Completed")),0)'],
@@ -547,7 +578,7 @@ function createDashboardSheet_(spreadsheet) {
   applyBodyStyle_(sheet.getRange('A4:B7'));
 
   sheet.getRange('D4:E4').merge().setValue('Out of Order Rooms').setFontWeight('bold').setFontSize(12);
-  sheet.getRange('D5').setFormula(`=IFERROR(QUERY('Active Work Orders'!B4:F250,"select B, count(B) where B is not null and B <> 'Other' and F <> 'Completed' group by B order by count(B) desc limit 5 label B 'Room / Location', count(B) 'Open Tickets'",0),{"Room / Location","Open Tickets"})`);
+  sheet.getRange('D5').setFormula(`=IFERROR(QUERY('Active Work Orders'!B4:F250,"${outOfOrderRoomsQuery}",0),{"${OUT_OF_ORDER_ROOM_HEADER}","${OUT_OF_ORDER_TICKET_HEADER}"})`);
   applyHeaderStyle_(sheet.getRange('D4:E4'));
   applyHeaderStyle_(sheet.getRange('D5:E5'));
   applyBodyStyle_(sheet.getRange('D5:E9'));
@@ -593,8 +624,7 @@ function createDashboardSheet_(spreadsheet) {
   sheet.getRange('J10:O10').merge().setValue('Upcoming PM').setFontWeight('bold').setFontSize(12);
   sheet.getRange(11, 10, 1, 6).setValues([['Room / Space', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status']]);
   applyHeaderStyle_(sheet.getRange(11, 10, 1, 6));
-  const pmSortColumnIndex = 12; // Sort by the 13th column in the filtered B:N range (Days Remaining).
-  const sortedPmFormula = `SORT(FILTER('Room Inspections'!B4:N250,'Room Inspections'!K4:K250<>"",'Room Inspections'!M4:M250<=${PM_UPCOMING_THRESHOLD_DAYS}),${pmSortColumnIndex},TRUE)`;
+  const sortedPmFormula = `SORT(FILTER('Room Inspections'!${pmFilterStartColumn}4:${pmFilterEndColumn}250,'Room Inspections'!${pmLastPmDateColumn}4:${pmLastPmDateColumn}250<>"",'Room Inspections'!${pmDaysRemainingColumn}4:${pmDaysRemainingColumn}250<=${PM_UPCOMING_THRESHOLD_DAYS}),${pmDaysRemainingSortIndex},TRUE)`;
   for (let row = 12; row <= 16; row += 1) {
     const offset = row - 11;
     sheet.getRange(row, 10).setFormula(`=IFERROR(INDEX(${sortedPmFormula},${offset},1),"")`);
