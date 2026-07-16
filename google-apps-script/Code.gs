@@ -422,11 +422,11 @@ function createRoomInspectionsSheet_(spreadsheet) {
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
   sheet.getRange(4, 1, ROOM_INSPECTIONS.length, dataWidth).setValues(ROOM_INSPECTIONS);
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
-  applyBodyStyle_(sheet.getRange(4, 1, ROOM_INSPECTIONS.length, dataWidth));
-  sheet.getRange(3, 1, ROOM_INSPECTIONS.length + 1, dataWidth).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
+  applyBodyStyle_(sheet.getRange(4, 1, 247, headers.length));
+  sheet.getRange(3, 1, 248, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
   setColumnWidths_(sheet, [100, 120, 130, 90, 90, 90, 110, 280, 90, 130, 110, 110, 90, 110]);
   sheet.setFrozenRows(3);
-  sheet.getRange(3, 1, ROOM_INSPECTIONS.length + 1, dataWidth).createFilter();
+  sheet.getRange(3, 1, 248, headers.length).createFilter();
 
   const lists = spreadsheet.getSheetByName('Lists');
   const statusRule = SpreadsheetApp.newDataValidation().requireValueInRange(lists.getRange('A4:A6'), true).setAllowInvalid(false).build();
