@@ -403,7 +403,7 @@ function createRoomInspectionPmSheet_(spreadsheet) {
 }
 
 function createRoomInspectionsSheet_(spreadsheet) {
-  const sheet = spreadsheet.getSheetByName('Room Inspections');
+  const sheet = spreadsheet.getSheetByName('Room Inspections') || spreadsheet.insertSheet('Room Inspections');
   const headers = ['Date', 'Room/Space', 'Inspection Status', 'HVAC', 'Plumbing', 'Electrical', 'Walls/Floors', 'Notes', 'Priority', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status'];
   applyTitle_(sheet, 'Detailed Room Inspections - Marriott Fairfield', 'Track room inspections, PM intervals, and follow-up status with a 30-day maintenance cycle.', headers.length);
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
@@ -426,7 +426,7 @@ function createRoomInspectionsSheet_(spreadsheet) {
   sheet.getRange('K4:L250').setNumberFormat('yyyy-mm-dd');
   sheet.getRange('M4:M250').setNumberFormat('0');
 
-  const pmRows = 247;
+  const pmRows = 250 - 4 + 1; // Rows 4:250 are the editable inspection/PM entry area.
   sheet.getRange(4, 12, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",RC[-1]+${PM_CYCLE_DAYS})`);
   sheet.getRange(4, 13, pmRows, 1).setFormulaR1C1('=IF(RC[-1]="","",RC[-1]-TODAY())');
   sheet.getRange(4, 14, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",IF(RC[-1]<0,"Overdue",IF(RC[-1]<=${PM_UPCOMING_THRESHOLD_DAYS},"Due Soon","Current")))`);
@@ -601,9 +601,10 @@ function createDashboardSheet_(spreadsheet) {
   sheet.getRange('J10:O10').merge().setValue('Upcoming PM').setFontWeight('bold').setFontSize(12);
   sheet.getRange(11, 10, 1, 6).setValues([['Room / Space', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status']]);
   applyHeaderStyle_(sheet.getRange(11, 10, 1, 6));
+  const pmSortColumnIndex = 12; // Days Remaining within the B:N range.
   for (let row = 12; row <= 16; row += 1) {
     const offset = row - 11;
-    const sortedPmFormula = `SORT(FILTER('Room Inspections'!B4:N250,'Room Inspections'!K4:K250<>"",'Room Inspections'!M4:M250<=${PM_UPCOMING_THRESHOLD_DAYS}),12,TRUE)`;
+    const sortedPmFormula = `SORT(FILTER('Room Inspections'!B4:N250,'Room Inspections'!K4:K250<>"",'Room Inspections'!M4:M250<=${PM_UPCOMING_THRESHOLD_DAYS}),${pmSortColumnIndex},TRUE)`;
     sheet.getRange(row, 10).setFormula(`=IFERROR(INDEX(${sortedPmFormula},${offset},1),"")`);
     sheet.getRange(row, 11).setFormula(`=IF(J${row}="","",INDEX(${sortedPmFormula},${offset},9))`);
     sheet.getRange(row, 12).setFormula(`=IF(J${row}="","",INDEX(${sortedPmFormula},${offset},10))`);
