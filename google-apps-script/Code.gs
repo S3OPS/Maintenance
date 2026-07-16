@@ -603,7 +603,7 @@ function createDashboardSheet_(spreadsheet) {
   sheet.getRange('J10:O10').merge().setValue('Upcoming PM').setFontWeight('bold').setFontSize(12);
   sheet.getRange(11, 10, 1, 6).setValues([['Room / Space', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status']]);
   applyHeaderStyle_(sheet.getRange(11, 10, 1, 6));
-  const pmSortColumnIndex = 12; // Column 12 in the filtered B:N range is Days Remaining (sheet column M).
+  const pmSortColumnIndex = 12; // In the filtered B:N range, B=1 and M=12, so this sorts by Days Remaining.
   for (let row = 12; row <= 16; row += 1) {
     const offset = row - 11;
     const sortedPmFormula = `SORT(FILTER('Room Inspections'!B4:N250,'Room Inspections'!K4:K250<>"",'Room Inspections'!M4:M250<=${PM_UPCOMING_THRESHOLD_DAYS}),${pmSortColumnIndex},TRUE)`;
