@@ -260,10 +260,12 @@ function prepareWorkbook_(spreadsheet) {
 }
 
 function resetSheet_(sheet) {
-  sheet.getDataRange().breakApart();
+  const dataRange = sheet.getDataRange();
+  const fullSheetRange = sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns());
+  dataRange.breakApart();
   sheet.clear();
-  sheet.clearDataValidations();
-  sheet.clearConditionalFormatRules();
+  fullSheetRange.clearDataValidations();
+  sheet.setConditionalFormatRules([]);
   const filter = sheet.getFilter();
   if (filter) {
     filter.remove();
