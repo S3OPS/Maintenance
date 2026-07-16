@@ -426,10 +426,12 @@ function createRoomInspectionsSheet_(spreadsheet) {
   sheet.getRange('K4:L250').setNumberFormat('yyyy-mm-dd');
   sheet.getRange('M4:M250').setNumberFormat('0');
 
-  const pmRows = 250 - 4 + 1; // Number of editable rows from row 4 through row 250.
-  sheet.getRange(4, 12, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",RC[-1]+${PM_CYCLE_DAYS})`);
-  sheet.getRange(4, 13, pmRows, 1).setFormulaR1C1('=IF(RC[-1]="","",RC[-1]-TODAY())');
-  sheet.getRange(4, 14, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",IF(RC[-1]<0,"Overdue",IF(RC[-1]<=${PM_UPCOMING_THRESHOLD_DAYS},"Due Soon","Current")))`);
+  const PM_START_ROW = 4;
+  const PM_END_ROW = 250;
+  const pmRows = PM_END_ROW - PM_START_ROW + 1;
+  sheet.getRange(PM_START_ROW, 12, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",RC[-1]+${PM_CYCLE_DAYS})`);
+  sheet.getRange(PM_START_ROW, 13, pmRows, 1).setFormulaR1C1('=IF(RC[-1]="","",RC[-1]-TODAY())');
+  sheet.getRange(PM_START_ROW, 14, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",IF(RC[-1]<0,"Overdue",IF(RC[-1]<=${PM_UPCOMING_THRESHOLD_DAYS},"Due Soon","Current")))`);
 
   sheet.setConditionalFormatRules([
    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Pass').setBackground('#C6EFCE').setRanges([sheet.getRange('C4:C250')]).build(),
