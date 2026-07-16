@@ -484,6 +484,12 @@ function createActiveWorkOrdersSheet_(spreadsheet) {
   sheet.getRange('E4:E250').setNumberFormat('yyyy-mm-dd').setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
   sheet.getRange('F4:F250').setDataValidation(statusRule);
 
+  // Auto-generate Ticket ID when the adjacent Room/Location cell (column B) is populated.
+  // ROW()-3 converts the sheet row to a 1-based sequence (rows 1-3 are title and header; data begins at row 4).
+  // The ID is tied to the row position so each row always carries a fixed, predictable ID (e.g. WO-001 … WO-247).
+  sheet.getRange(4, 1, 247, 1).setFormulaR1C1('=IF(RC[1]<>"","WO-"&TEXT(ROW()-3,"000"),"")');
+  sheet.getRange('A4:A250').setHorizontalAlignment('center');
+
   sheet.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Not Started').setBackground('#FFEB9C').setRanges([sheet.getRange('F4:F250')]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Work In Progress').setBackground('#D9EAF7').setRanges([sheet.getRange('F4:F250')]).build(),
