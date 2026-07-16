@@ -426,7 +426,7 @@ function createRoomInspectionsSheet_(spreadsheet) {
   sheet.getRange('K4:L250').setNumberFormat('yyyy-mm-dd');
   sheet.getRange('M4:M250').setNumberFormat('0');
 
-  const pmRows = 250 - 4 + 1; // Rows 4:250 are the editable inspection/PM entry area.
+  const pmRows = 250 - 4 + 1; // Number of editable rows from row 4 through row 250.
   sheet.getRange(4, 12, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",RC[-1]+${PM_CYCLE_DAYS})`);
   sheet.getRange(4, 13, pmRows, 1).setFormulaR1C1('=IF(RC[-1]="","",RC[-1]-TODAY())');
   sheet.getRange(4, 14, pmRows, 1).setFormulaR1C1(`=IF(RC[-1]="","",IF(RC[-1]<0,"Overdue",IF(RC[-1]<=${PM_UPCOMING_THRESHOLD_DAYS},"Due Soon","Current")))`);
@@ -601,7 +601,7 @@ function createDashboardSheet_(spreadsheet) {
   sheet.getRange('J10:O10').merge().setValue('Upcoming PM').setFontWeight('bold').setFontSize(12);
   sheet.getRange(11, 10, 1, 6).setValues([['Room / Space', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status']]);
   applyHeaderStyle_(sheet.getRange(11, 10, 1, 6));
-  const pmSortColumnIndex = 12; // Days Remaining within the B:N range.
+  const pmSortColumnIndex = 12; // Column 12 in the filtered B:N range is Days Remaining (sheet column M).
   for (let row = 12; row <= 16; row += 1) {
     const offset = row - 11;
     const sortedPmFormula = `SORT(FILTER('Room Inspections'!B4:N250,'Room Inspections'!K4:K250<>"",'Room Inspections'!M4:M250<=${PM_UPCOMING_THRESHOLD_DAYS}),${pmSortColumnIndex},TRUE)`;
