@@ -2,6 +2,7 @@ const SHEET_ORDER = [
   'Dashboard',
   'Room Inspection PM',
   'Room Inspections',
+  'Active Work Orders',
   'Parts Inventory',
   'Daily Tasks',
   'Weekly Tasks',
@@ -143,6 +144,77 @@ const MONTHLY_TASKS = [
   ['M-004', 'Mechanical', 'Lubricate motors, bearings, and door hardware', 'Shift Engineer', 'Monthly', 'Last Week', 150, 'Not Started', '2026-06-26', 'Record used materials']
 ];
 
+const WORK_ORDER_LOCATIONS = [
+  'Other',
+  '101',
+  '102',
+  '103',
+  '104',
+  '105',
+  '106',
+  '107',
+  '121',
+  '201',
+  '202',
+  '203',
+  '204',
+  '205',
+  '206',
+  '207',
+  '208',
+  '209',
+  '210',
+  '211',
+  '213',
+  '214',
+  '215',
+  '216',
+  '217',
+  '218',
+  '219',
+  '221',
+  '301',
+  '302',
+  '303',
+  '304',
+  '305',
+  '306',
+  '307',
+  '308',
+  '309',
+  '310',
+  '311',
+  '313',
+  '314',
+  '315',
+  '316',
+  '317',
+  '318',
+  '319',
+  '321',
+  '401',
+  '402',
+  '403',
+  '404',
+  '405',
+  '406',
+  '407',
+  '408',
+  '409',
+  '410',
+  '411',
+  '413',
+  '414',
+  '415',
+  '416',
+  '417',
+  '418',
+  '419',
+  '421'
+];
+
+const WORK_ORDER_STATUSES = ['Not Started', 'Work In Progress', 'Completed'];
+
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Maintenance Dashboard')
@@ -156,6 +228,7 @@ function buildFairfieldMaintenanceProject() {
   createListsSheet_(spreadsheet);
   createRoomInspectionPmSheet_(spreadsheet);
   createRoomInspectionsSheet_(spreadsheet);
+  createActiveWorkOrdersSheet_(spreadsheet);
   createInventorySheet_(spreadsheet);
   createTaskSheet_(spreadsheet, 'Daily Tasks', 'Daily Maintenance Tasks', 'Use this sheet to manage daily building checks, hotel operations walk-throughs, and shift handoffs.', DAILY_TASKS);
   createTaskSheet_(spreadsheet, 'Weekly Tasks', 'Weekly Maintenance Tasks', 'Use this sheet to plan recurring weekly preventive maintenance work.', WEEKLY_TASKS);
@@ -355,6 +428,38 @@ function createRoomInspectionsSheet_(spreadsheet) {
   ]);
 }
 
+function createActiveWorkOrdersSheet_(spreadsheet) {
+  const sheet = spreadsheet.getSheetByName('Active Work Orders');
+  const headers = ['Ticket ID', 'Room/Location', 'Issue Description', 'Priority', 'Date Reported', 'Status'];
+  applyTitle_(sheet, 'Active Work Orders', 'Track guest- or staff-reported issues that need immediate attention and follow-up.', headers.length);
+  sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
+  applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
+  applyBodyStyle_(sheet.getRange(4, 1, 247, headers.length));
+  sheet.getRange(3, 1, 248, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
+  setColumnWidths_(sheet, [110, 150, 320, 100, 120, 150]);
+  sheet.setFrozenRows(3);
+  sheet.getRange(3, 1, 248, headers.length).createFilter();
+  sheet.setHiddenGridlines(true);
+
+  const lists = spreadsheet.getSheetByName('Lists');
+  const priorityRule = SpreadsheetApp.newDataValidation().requireValueInRange(lists.getRange('C4:C7'), true).setAllowInvalid(false).build();
+  const locationRule = SpreadsheetApp.newDataValidation().requireValueInList(WORK_ORDER_LOCATIONS, true).setAllowInvalid(false).build();
+  const statusRule = SpreadsheetApp.newDataValidation().requireValueInList(WORK_ORDER_STATUSES, true).setAllowInvalid(false).build();
+
+  sheet.getRange('B4:B250').setDataValidation(locationRule);
+  sheet.getRange('D4:D250').setDataValidation(priorityRule);
+  sheet.getRange('E4:E250').setNumberFormat('yyyy-mm-dd').setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
+  sheet.getRange('F4:F250').setDataValidation(statusRule);
+
+  sheet.setConditionalFormatRules([
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Not Started').setBackground('#FFEB9C').setRanges([sheet.getRange('F4:F250')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Work In Progress').setBackground('#D9EAF7').setRanges([sheet.getRange('F4:F250')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Completed').setBackground('#C6EFCE').setRanges([sheet.getRange('F4:F250')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('High').setBackground('#FFC7CE').setRanges([sheet.getRange('D4:D250')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Critical').setBackground('#EA9999').setRanges([sheet.getRange('D4:D250')]).build()
+  ]);
+}
+
 function createInventorySheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Parts Inventory');
   const headers = ['Part ID', 'Category', 'Part Name', 'Equipment/Area', 'Vendor', 'Unit Cost', 'On Hand', 'Min Level', 'Reorder Qty', 'Lead Time (Days)', 'Reorder Status', 'Critical Item', 'Storage Location', 'Notes'];
@@ -408,7 +513,7 @@ function createTaskSheet_(spreadsheet, sheetName, title, subtitle, rows) {
 function createDashboardSheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Dashboard');
   applyTitle_(sheet, 'Fairfield Maintenance Command Center', 'Interactive dashboard fed by the inspection, inventory, and recurring task sheets.', 7);
-  setColumnWidths_(sheet, [180, 120, 120, 120, 180, 140, 120]);
+  setColumnWidths_(sheet, [180, 120, 120, 120, 180, 140, 120, 120, 120]);
   sheet.setFrozenRows(3);
 
   const metricLabels = [
@@ -437,6 +542,20 @@ function createDashboardSheet_(spreadsheet) {
   sheet.getRange('E6').setNumberFormat('$#,##0.00');
   applyBodyStyle_(sheet.getRange('A4:B7'));
   applyBodyStyle_(sheet.getRange('D4:E7'));
+
+  // Columns H and I hold the active work order summary metrics.
+  const workOrderLabels = [
+    ['Active Work Orders', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Not Started")+COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Work In Progress")'],
+    ['Work Orders In Progress', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Work In Progress")'],
+    ['Work Orders Completed', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"Completed")'],
+    ['Work Orders Logged', '=COUNTA(\'Active Work Orders\'!A4:A250)']
+  ];
+  workOrderLabels.forEach((entry, index) => {
+    const row = index + 4;
+    sheet.getRange(row, 8).setValue(entry[0]).setBackground('#D9EAF7').setFontWeight('bold');
+    sheet.getRange(row, 9).setFormula(entry[1]);
+  });
+  applyBodyStyle_(sheet.getRange('H4:I7'));
 
   sheet.getRange('A10:D10').merge().setValue('Recurring Task Completion').setFontWeight('bold').setFontSize(12);
   sheet.getRange(11, 1, 1, 4).setValues([['Cadence', 'Completed', 'Total', 'Completion %']]);
