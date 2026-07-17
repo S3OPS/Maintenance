@@ -484,10 +484,10 @@ function createActiveWorkOrdersSheet_(spreadsheet) {
   sheet.getRange('E4:E250').setNumberFormat('yyyy-mm-dd').setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
   sheet.getRange('F4:F250').setDataValidation(statusRule);
 
-  // Auto-generate Ticket ID when the adjacent Room/Location cell (column B) is populated.
+  // Auto-generate Ticket ID when the Status cell (column F) is selected via dropdown.
   // ROW()-3 converts the sheet row to a 1-based sequence (rows 1-3 are title and header; data begins at row 4).
   // The ID is tied to the row position so each row always carries a fixed, predictable ID (e.g. WO-001 … WO-247).
-  sheet.getRange(4, 1, 247, 1).setFormulaR1C1('=IF(RC[1]<>"","WO-"&TEXT(ROW()-3,"000"),"")');
+  sheet.getRange(4, 1, 247, 1).setFormulaR1C1('=IF(RC[5]<>"","WO-"&TEXT(ROW()-3,"000"),"")');
   sheet.getRange('A4:A250').setHorizontalAlignment('center');
 
   sheet.setConditionalFormatRules([
@@ -575,7 +575,7 @@ function createDashboardSheet_(spreadsheet) {
   const pmDaysRemainingSortIndex = ROOM_INSPECTIONS_DAYS_REMAINING_SORT_INDEX;
 
   const kpiLabels = [
-    ['Open Tickets', '=COUNTIFS(\'Active Work Orders\'!A4:A250,"<>",\'Active Work Orders\'!F4:F250,"<>Completed")'],
+    ['Open Tickets', '=COUNTIF(\'Active Work Orders\'!F4:F250,"Not Started")+COUNTIF(\'Active Work Orders\'!F4:F250,"Work In Progress")'],
     ['Rooms Out of Order', '=IFERROR(COUNTUNIQUE(FILTER(\'Active Work Orders\'!B4:B250,\'Active Work Orders\'!A4:A250<>"",\'Active Work Orders\'!B4:B250<>"",\'Active Work Orders\'!B4:B250<>"Other",\'Active Work Orders\'!F4:F250<>"Completed")),0)'],
     ['PMs Overdue', '=COUNTIF(\'Room Inspections\'!N4:N250,"Overdue")'],
     ['Parts On Order', '=COUNTIF(\'Parts Inventory\'!K4:K250,"Reorder")']
@@ -603,23 +603,6 @@ function createDashboardSheet_(spreadsheet) {
     .setOption('chartArea', { width: '70%', height: '70%' })
     .build();
   sheet.insertChart(roomChart);
-
-  sheet.getRange('A10:D10').merge().setValue('Recurring Task Completion').setFontWeight('bold').setFontSize(12);
-  sheet.getRange(11, 1, 1, 4).setValues([['Cadence', 'Completed', 'Total', 'Completion %']]);
-  applyHeaderStyle_(sheet.getRange(11, 1, 1, 4));
-  const taskSummary = [
-    ['Daily', '=COUNTIF(\'Daily Tasks\'!H4:H250,"Complete")', '=COUNTA(\'Daily Tasks\'!A4:A250)', '=IFERROR(B12/C12,0)'],
-    ['Weekly', '=COUNTIF(\'Weekly Tasks\'!H4:H250,"Complete")', '=COUNTA(\'Weekly Tasks\'!A4:A250)', '=IFERROR(B13/C13,0)'],
-    ['Monthly', '=COUNTIF(\'Monthly Tasks\'!H4:H250,"Complete")', '=COUNTA(\'Monthly Tasks\'!A4:A250)', '=IFERROR(B14/C14,0)']
-  ];
-  taskSummary.forEach((row, index) => {
-    sheet.getRange(12 + index, 1, 1, 4).setValues([[row[0], '', '', '']]);
-    sheet.getRange(12 + index, 2).setFormula(row[1]);
-    sheet.getRange(12 + index, 3).setFormula(row[2]);
-    sheet.getRange(12 + index, 4).setFormula(row[3]);
-  });
-  sheet.getRange('D12:D14').setNumberFormat('0%');
-  applyBodyStyle_(sheet.getRange('A12:D14'));
 
   sheet.getRange('F10:G10').merge().setValue('Follow-Up Snapshot').setFontWeight('bold').setFontSize(12);
   sheet.getRange(11, 6, 1, 2).setValues([['Room / Space', 'Priority']]);
