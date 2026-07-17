@@ -589,70 +589,192 @@ function createTaskSheet_(spreadsheet, sheetName, title, subtitle, rows) {
 
 function createDashboardSheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Dashboard');
-  applyTitle_(sheet, 'Fairfield Maintenance Command Center', 'Interactive dashboard for open work orders, out-of-order rooms, overdue PMs, and parts availability.', 15);
+
+  // ─── LAYOUT ──────────────────────────────────────────────────
   setColumnWidths_(sheet, [180, 120, 120, 120, 180, 140, 120, 120, 120, 150, 130, 110, 100, 110, 110]);
   sheet.setFrozenRows(3);
+  sheet.setHiddenGridlines(true);
 
-  const ACTIVE_WORK_ORDER_LOCATION_COLUMN = 2;
-  const ACTIVE_WORK_ORDER_STATUS_COLUMN = 7;
-  const OUT_OF_ORDER_ROOM_HEADER = 'Room / Location';
-  const OUT_OF_ORDER_TICKET_HEADER = 'Open Tickets';
+  // ─── TITLE BAR ───────────────────────────────────────────────
+  sheet.getRange(1, 1, 1, 15).merge()
+    .setValue('🏨  Fairfield Maintenance Command Center')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontSize(18)
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  sheet.setRowHeight(1, 44);
+
+  sheet.getRange(2, 1, 1, 15).merge()
+    .setValue('Real-time operations dashboard  ·  Work Orders  ·  PM Schedules  ·  Parts Inventory  ·  Facility Health')
+    .setBackground('#2E75B6')
+    .setFontColor('#BDD7EE')
+    .setFontSize(10)
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  sheet.setRowHeight(2, 20);
+
+  // Thin decorative divider
+  sheet.getRange(3, 1, 1, 15).setBackground('#BDD7EE');
+  sheet.setRowHeight(3, 6);
+
+  // ─── KPI TILES (A4:B7) ───────────────────────────────────────
+  const kpiData = [
+    ['🎟️  Open Tickets',
+     "=COUNTIF('Active Work Orders'!G4:G250,\"Not Started\")+COUNTIF('Active Work Orders'!G4:G250,\"Work In Progress\")"],
+    ['🏠  Rooms w/ Open WOs',
+     "=IFERROR(COUNTUNIQUE(FILTER('Active Work Orders'!B4:B250,'Active Work Orders'!A4:A250<>\"\","
+     + "'Active Work Orders'!B4:B250<>\"\","
+     + "'Active Work Orders'!B4:B250<>\"Other\","
+     + "'Active Work Orders'!G4:G250<>\"Completed\")),0)"],
+    ['⚠️  PMs Overdue',
+     "=COUNTIF('Room Inspections'!N4:N250,\"Overdue\")"],
+    ['📦  Parts to Reorder',
+     "=COUNTIF('Parts Inventory'!K4:K250,\"Reorder\")"]
+  ];
+  kpiData.forEach(([label, formula], i) => {
+    const row = 4 + i;
+    sheet.getRange(row, 1)
+      .setValue(label)
+      .setBackground('#1F4E78')
+      .setFontColor('#FFFFFF')
+      .setFontWeight('bold')
+      .setFontSize(11)
+      .setHorizontalAlignment('left')
+      .setVerticalAlignment('middle');
+    sheet.getRange(row, 2)
+      .setFormula(formula)
+      .setBackground('#EBF3FB')
+      .setFontColor('#1F4E78')
+      .setFontSize(22)
+      .setFontWeight('bold')
+      .setHorizontalAlignment('center')
+      .setVerticalAlignment('middle');
+    sheet.setRowHeight(row, 38);
+  });
+  // Thick outer border around the KPI block; inner borders preserved by null params.
+  sheet.getRange('A4:B7').setBorder(true, true, true, true, null, null, '#1F4E78', SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+
+  // ─── WORK ORDER STATUS TABLE (D4:E7) ─────────────────────────
+  // Replaces the previous QUERY-based "Out of Order Rooms" section.
+  // COUNTIF formulas are direct and always compile data correctly.
+  sheet.getRange('D4:E4').merge()
+    .setValue('Work Order Status')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold')
+    .setFontSize(11)
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  const woStatusRows = [
+    ['Not Started',      "=COUNTIF('Active Work Orders'!G4:G250,\"Not Started\")"],
+    ['Work In Progress', "=COUNTIF('Active Work Orders'!G4:G250,\"Work In Progress\")"],
+    ['Completed',        "=COUNTIF('Active Work Orders'!G4:G250,\"Completed\")"]
+  ];
+  woStatusRows.forEach(([label, formula], i) => {
+    const row = 5 + i;
+    sheet.getRange(row, 4).setValue(label).setFontWeight('bold').setFontSize(10);
+    sheet.getRange(row, 5).setFormula(formula).setHorizontalAlignment('center').setFontSize(18).setFontWeight('bold');
+  });
+  applyBodyStyle_(sheet.getRange('D5:E7'));
+  sheet.getRange('D5:E7').setVerticalAlignment('middle');
+  sheet.getRange('D4:E7').setBorder(true, true, true, true, null, null, '#1F4E78', SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+
+  // ─── PRIORITY BREAKDOWN TABLE (G4:H8) ────────────────────────
+  sheet.getRange('G4:H4').merge()
+    .setValue('Open WOs by Priority')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold')
+    .setFontSize(11)
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  const priorityRows = [
+    ['🚨 Critical', "=COUNTIF('Active Work Orders'!E4:E250,\"Critical\")"],
+    ['🔴 High',     "=COUNTIF('Active Work Orders'!E4:E250,\"High\")"],
+    ['🟡 Medium',   "=COUNTIF('Active Work Orders'!E4:E250,\"Medium\")"],
+    ['🟢 Low',      "=COUNTIF('Active Work Orders'!E4:E250,\"Low\")"]
+  ];
+  priorityRows.forEach(([label, formula], i) => {
+    const row = 5 + i;
+    sheet.getRange(row, 7).setValue(label).setFontWeight('bold').setFontSize(10);
+    sheet.getRange(row, 8).setFormula(formula).setHorizontalAlignment('center').setFontSize(18).setFontWeight('bold');
+    sheet.setRowHeight(row, 38);
+  });
+  applyBodyStyle_(sheet.getRange('G5:H8'));
+  sheet.getRange('G5:H8').setVerticalAlignment('middle');
+  sheet.getRange('G4:H8').setBorder(true, true, true, true, null, null, '#1F4E78', SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+
+  // Priority breakdown horizontal bar chart (anchored at column J, row 4)
+  const priorityChart = sheet.newChart()
+    .asBarChart()
+    .addRange(sheet.getRange('G4:H8'))
+    .setNumHeaders(1)
+    .setPosition(4, 10, 0, 0)
+    .setOption('title', 'Open Work Orders by Priority')
+    .setOption('titleTextStyle', { fontSize: 12, bold: true, color: '#1F4E78' })
+    .setOption('legend', { position: 'none' })
+    .setOption('chartArea', { width: '65%', height: '70%' })
+    .setOption('colors', ['#C00000', '#FF5050', '#FFC000', '#70AD47'])
+    .setOption('hAxis', { minValue: 0 })
+    .setOption('width', 490)
+    .setOption('height', 220)
+    .build();
+  sheet.insertChart(priorityChart);
+
+  // ─── CRITICAL & HIGH PRIORITY OPEN WOs (A10:C16) ─────────────
+  sheet.getRange('A10:C10').merge()
+    .setValue('🚨  Critical & High Priority Open Work Orders')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold')
+    .setFontSize(12)
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  sheet.setRowHeight(10, 30);
+  sheet.getRange(11, 1, 1, 3).setValues([['Room / Location', 'Issue Type', 'Priority']]);
+  applyHeaderStyle_(sheet.getRange(11, 1, 1, 3));
+  sheet.setRowHeight(11, 24);
+
+  // Filter rows where priority is Critical or High and work order is not yet Completed.
+  // SORT ascending on column 4 of B:G range (Priority = E) so "Critical" precedes "High".
+  const critHighBase = "SORT(FILTER('Active Work Orders'!B4:G250,"
+    + "('Active Work Orders'!E4:E250=\"Critical\")+('Active Work Orders'!E4:E250=\"High\"),"
+    + "'Active Work Orders'!G4:G250<>\"Completed\","
+    + "'Active Work Orders'!B4:B250<>\"\"),4,TRUE)";
+  for (let row = 12; row <= 16; row += 1) {
+    const offset = row - 11;
+    // Within B4:G250: col 1=Room(B), col 2=IssueType(C), col 4=Priority(E)
+    sheet.getRange(row, 1).setFormula(`=IFERROR(INDEX(${critHighBase},${offset},1),"")`);
+    sheet.getRange(row, 2).setFormula(`=IF(A${row}="","",IFERROR(INDEX(${critHighBase},${offset},2),""))`);
+    sheet.getRange(row, 3).setFormula(`=IF(A${row}="","",IFERROR(INDEX(${critHighBase},${offset},4),""))`);
+    sheet.setRowHeight(row, 26);
+  }
+  applyBodyStyle_(sheet.getRange('A12:C16'));
+  sheet.getRange('A12:C16').setHorizontalAlignment('center');
+
+  // ─── UPCOMING PM SECTION (J10:O16) ───────────────────────────
   const ROOM_INSPECTIONS_FIRST_COLUMN = 2;
   const ROOM_INSPECTIONS_LAST_PM_DATE_COLUMN = 11;
   const ROOM_INSPECTIONS_DAYS_REMAINING_COLUMN = 13;
   const ROOM_INSPECTIONS_FILTER_END_COLUMN = 14;
   const ROOM_INSPECTIONS_DAYS_REMAINING_SORT_INDEX = 12;
 
-  const activeWorkOrderLocationColumn = columnLetter_(ACTIVE_WORK_ORDER_LOCATION_COLUMN);
-  const activeWorkOrderStatusColumn = columnLetter_(ACTIVE_WORK_ORDER_STATUS_COLUMN);
-  const outOfOrderRoomsQuery = `select ${activeWorkOrderLocationColumn}, count(${activeWorkOrderLocationColumn}) where ${activeWorkOrderLocationColumn} is not null and ${activeWorkOrderLocationColumn} <> 'Other' and ${activeWorkOrderStatusColumn} <> 'Completed' group by ${activeWorkOrderLocationColumn} order by count(${activeWorkOrderLocationColumn}) desc limit 5 label ${activeWorkOrderLocationColumn} '${OUT_OF_ORDER_ROOM_HEADER}', count(${activeWorkOrderLocationColumn}) '${OUT_OF_ORDER_TICKET_HEADER}'`;
   const pmFilterStartColumn = columnLetter_(ROOM_INSPECTIONS_FIRST_COLUMN);
   const pmFilterEndColumn = columnLetter_(ROOM_INSPECTIONS_FILTER_END_COLUMN);
   const pmLastPmDateColumn = columnLetter_(ROOM_INSPECTIONS_LAST_PM_DATE_COLUMN);
   const pmDaysRemainingColumn = columnLetter_(ROOM_INSPECTIONS_DAYS_REMAINING_COLUMN);
   const pmDaysRemainingSortIndex = ROOM_INSPECTIONS_DAYS_REMAINING_SORT_INDEX;
 
-  const kpiLabels = [
-    ['Open Tickets', '=COUNTIF(\'Active Work Orders\'!G4:G250,"Not Started")+COUNTIF(\'Active Work Orders\'!G4:G250,"Work In Progress")'],
-    ['Rooms Out of Order', '=IFERROR(COUNTUNIQUE(FILTER(\'Active Work Orders\'!B4:B250,\'Active Work Orders\'!A4:A250<>"",\'Active Work Orders\'!B4:B250<>"",\'Active Work Orders\'!B4:B250<>"Other",\'Active Work Orders\'!G4:G250<>"Completed")),0)'],
-    ['PMs Overdue', '=COUNTIF(\'Room Inspections\'!N4:N250,"Overdue")'],
-    ['Parts On Order', '=COUNTIF(\'Parts Inventory\'!K4:K250,"Reorder")']
-  ];
-  kpiLabels.forEach((entry, index) => {
-    const row = index + 4;
-    sheet.getRange(row, 1).setValue(entry[0]).setBackground('#D9EAF7').setFontWeight('bold');
-    sheet.getRange(row, 2).setFormula(entry[1]).setFontSize(18).setFontWeight('bold').setHorizontalAlignment('center');
-  });
-  applyBodyStyle_(sheet.getRange('A4:B7'));
-
-  sheet.getRange('D4:E4').merge().setValue('Out of Order Rooms').setFontWeight('bold').setFontSize(12);
-  sheet.getRange('D5').setFormula(`=IFERROR(QUERY('Active Work Orders'!B4:G250,"${outOfOrderRoomsQuery}",0),{"${OUT_OF_ORDER_ROOM_HEADER}","${OUT_OF_ORDER_TICKET_HEADER}"})`);
-  applyHeaderStyle_(sheet.getRange('D4:E4'));
-  applyHeaderStyle_(sheet.getRange('D5:E5'));
-  applyBodyStyle_(sheet.getRange('D5:E9'));
-  sheet.getRange('D5:E9').setHorizontalAlignment('center');
-
-  const roomChart = sheet.newChart()
-    .asBarChart()
-    .addRange(sheet.getRange('D5:E9'))
-    .setPosition(4, 7, 0, 0)
-    .setOption('title', 'Out of Order Rooms by Open Ticket Count')
-    .setOption('legend', { position: 'none' })
-    .setOption('chartArea', { width: '70%', height: '70%' })
-    .build();
-  sheet.insertChart(roomChart);
-
-  sheet.getRange('F10:G10').merge().setValue('Follow-Up Snapshot').setFontWeight('bold').setFontSize(12);
-  sheet.getRange(11, 6, 1, 2).setValues([['Room / Space', 'Priority']]);
-  applyHeaderStyle_(sheet.getRange(11, 6, 1, 2));
-  for (let row = 12; row <= 16; row += 1) {
-    const offset = row - 11;
-    sheet.getRange(row, 6).setFormula(`=IFERROR(INDEX(FILTER('Room Inspections'!B4:B250,'Room Inspections'!C4:C250<>"Pass"),${offset}),"")`);
-    sheet.getRange(row, 7).setFormula(`=IF(F${row}="","",INDEX(FILTER('Room Inspections'!I4:I250,'Room Inspections'!C4:C250<>"Pass"),${offset}))`);
-  }
-  applyBodyStyle_(sheet.getRange('F12:G16'));
-
-  sheet.getRange('J10:O10').merge().setValue('Upcoming PM').setFontWeight('bold').setFontSize(12);
+  sheet.getRange('J10:O10').merge()
+    .setValue('🔔  Upcoming PM — Due Within 7 Days')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold')
+    .setFontSize(12)
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
   sheet.getRange(11, 10, 1, 6).setValues([['Room / Space', 'Performed By', 'Last PM Date', 'Next Due Date', 'Days Remaining', 'PM Status']]);
   applyHeaderStyle_(sheet.getRange(11, 10, 1, 6));
   const sortedPmFormula = `SORT(FILTER('Room Inspections'!${pmFilterStartColumn}4:${pmFilterEndColumn}250,'Room Inspections'!${pmLastPmDateColumn}4:${pmLastPmDateColumn}250<>"",'Room Inspections'!${pmDaysRemainingColumn}4:${pmDaysRemainingColumn}250<=${PM_UPCOMING_THRESHOLD_DAYS}),${pmDaysRemainingSortIndex},TRUE)`;
@@ -669,29 +791,114 @@ function createDashboardSheet_(spreadsheet) {
   sheet.getRange('N12:N16').setNumberFormat('0');
   applyBodyStyle_(sheet.getRange('J12:O16'));
 
-  // Issue type breakdown chart – last 30 days of work orders
+  // ─── WORK ORDERS LAST 30 DAYS – DATA TABLE (A19:B29) ─────────
   const issueTypeStartRow = 19;
-  sheet.getRange(issueTypeStartRow, 1, 1, 4).merge().setValue('Work Orders – Last 30 Days by Issue Type').setFontSize(12);
-  applyHeaderStyle_(sheet.getRange(issueTypeStartRow, 1, 1, 4));
+  sheet.getRange(issueTypeStartRow, 1, 1, 2).merge()
+    .setValue('Work Orders – Last 30 Days by Issue Type')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold')
+    .setFontSize(12)
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  sheet.setRowHeight(issueTypeStartRow, 28);
+
   sheet.getRange(issueTypeStartRow + 1, 1, 1, 2).setValues([['Issue Type', 'Count']]);
   applyHeaderStyle_(sheet.getRange(issueTypeStartRow + 1, 1, 1, 2));
+
   WORK_ORDER_ISSUE_TYPES.forEach((type, i) => {
     const row = issueTypeStartRow + 2 + i;
     sheet.getRange(row, 1).setValue(type);
     sheet.getRange(row, 2).setFormula(
       `=COUNTIFS('Active Work Orders'!C$4:C$250,"${type}",'Active Work Orders'!F$4:F$250,">="&(TODAY()-30))`
     );
+    sheet.setRowHeight(row, 24);
   });
   applyBodyStyle_(sheet.getRange(issueTypeStartRow + 2, 1, WORK_ORDER_ISSUE_TYPES.length, 2));
 
-  const issueTypeChart = sheet.newChart()
-    .asColumnChart()
+  // ─── PIE CHART – LAST 30 DAYS WORK ORDERS ────────────────────
+  // Large pie chart with title and legend centered at the bottom.
+  const pieChart = sheet.newChart()
+    .asPieChart()
     .addRange(sheet.getRange(issueTypeStartRow + 1, 1, WORK_ORDER_ISSUE_TYPES.length + 1, 2))
+    .setNumHeaders(1)
     .setPosition(issueTypeStartRow, 4, 0, 0)
     .setOption('title', 'Work Orders by Issue Type – Last 30 Days')
-    .setOption('legend', { position: 'none' })
-    .setOption('chartArea', { width: '75%', height: '68%' })
-    .setOption('hAxis', { slantedText: true, slantedTextAngle: 45 })
+    .setOption('titleTextStyle', { fontSize: 14, bold: true, color: '#1F4E78' })
+    .setOption('legend', { position: 'bottom', alignment: 'center', textStyle: { fontSize: 11, color: '#444444' } })
+    .setOption('chartArea', { width: '82%', height: '58%', top: '12%', left: 'auto' })
+    .setOption('colors', ['#1F4E78', '#2E75B6', '#4472C4', '#5B9BD5', '#9DC3E6', '#FFC000', '#FF7F40', '#BDD7EE', '#70AD47', '#FF4444'])
+    .setOption('pieSliceTextStyle', { fontSize: 10, color: '#FFFFFF' })
+    .setOption('width', 700)
+    .setOption('height', 430)
     .build();
-  sheet.insertChart(issueTypeChart);
+  sheet.insertChart(pieChart);
+
+  // ─── CONDITIONAL FORMATTING ───────────────────────────────────
+  sheet.setConditionalFormatRules([
+    // Open Tickets KPI: red ≥10, yellow 5–9, green <5
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberGreaterThanOrEqualTo(10).setBackground('#FFC7CE').setFontColor('#C00000')
+      .setRanges([sheet.getRange('B4')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberBetween(5, 9).setBackground('#FFEB9C').setFontColor('#9C5700')
+      .setRanges([sheet.getRange('B4')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberLessThan(5).setBackground('#C6EFCE').setFontColor('#375623')
+      .setRanges([sheet.getRange('B4')]).build(),
+    // PMs Overdue KPI: red if any, green if zero
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberGreaterThan(0).setBackground('#FFC7CE').setFontColor('#C00000')
+      .setRanges([sheet.getRange('B6')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberEqualTo(0).setBackground('#C6EFCE').setFontColor('#375623')
+      .setRanges([sheet.getRange('B6')]).build(),
+    // Parts to Reorder KPI: yellow if any, green if zero
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberGreaterThan(0).setBackground('#FFEB9C').setFontColor('#9C5700')
+      .setRanges([sheet.getRange('B7')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberEqualTo(0).setBackground('#C6EFCE').setFontColor('#375623')
+      .setRanges([sheet.getRange('B7')]).build(),
+    // Work Order Status counts
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenCellNotEmpty().setFontColor('#C00000')
+      .setRanges([sheet.getRange('E5')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenCellNotEmpty().setFontColor('#2E75B6')
+      .setRanges([sheet.getRange('E6')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenCellNotEmpty().setFontColor('#375623')
+      .setRanges([sheet.getRange('E7')]).build(),
+    // Priority counts
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenCellNotEmpty().setFontColor('#C00000')
+      .setRanges([sheet.getRange('H5')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenCellNotEmpty().setFontColor('#FF5050')
+      .setRanges([sheet.getRange('H6')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenCellNotEmpty().setFontColor('#9C5700')
+      .setRanges([sheet.getRange('H7')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenCellNotEmpty().setFontColor('#375623')
+      .setRanges([sheet.getRange('H8')]).build(),
+    // Critical & High Priority list – Priority column
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Critical').setBackground('#FFC7CE').setFontColor('#C00000').setFontWeight('bold')
+      .setRanges([sheet.getRange('C12:C16')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('High').setBackground('#FFEB9C').setFontColor('#9C5700').setFontWeight('bold')
+      .setRanges([sheet.getRange('C12:C16')]).build(),
+    // PM Status
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Current').setBackground('#C6EFCE')
+      .setRanges([sheet.getRange('O12:O16')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Due Soon').setBackground('#FFEB9C')
+      .setRanges([sheet.getRange('O12:O16')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Overdue').setBackground('#FFC7CE')
+      .setRanges([sheet.getRange('O12:O16')]).build()
+  ]);
 }
