@@ -179,7 +179,7 @@ Scope: Excludes all pool-related tools and chemicals; emphasizes guest rooms, pu
 - Telescoping inspection mirror + magnetic pickup tool
 - Borescope / inspection camera for behind casegoods, under tubs, above ceilings, and inside wall/ceiling cavities
 - Probe thermometer for domestic hot-water spot checks in guest rooms and public restrooms
-- Finish-safe trim/pry tools for access panels, guest-room hardware, and casegoods without cosmetic damage
+- Finish-safe trim/pry tools for access panels, guest-room hardware, and guest-room furniture/casegoods without cosmetic damage
 - Tamper-resistant/security bit set dedicated to guest-room fixtures, bathroom accessories, and public-area hardware
 - Dedicated audit cart/bin stocked for fast room turns: touch-up supplies, spare lamps, batteries, caulk, cover plates, and common fasteners
 - Keep final compliance aligned with current Marriott/Fairfield brand standards, local code, and property SOPs before each audit cycle
