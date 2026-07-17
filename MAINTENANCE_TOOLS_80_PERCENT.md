@@ -205,6 +205,6 @@ Scope: Excludes all pool-related tools and chemicals; emphasizes guest rooms, pu
 ## Notes
 
 - This list intentionally excludes all pool-specific items.
-- Confirm final tool and inspection requirements against current Marriott/Fairfield brand standards, local code, and property SOPs before each audit cycle.
+- Confirm final tool and inspection requirements against current Fairfield by Marriott brand standards, local code, and property SOPs before each audit cycle.
 - Standardize battery platform/brand where possible to reduce downtime.
 - Keep duplicate daily-use hand tools on both the job cart and in the shop.
