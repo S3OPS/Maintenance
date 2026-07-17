@@ -658,7 +658,7 @@ function createDashboardSheet_(spreadsheet) {
 
   // ─── WORK ORDER STATUS TABLE (D4:E7) ─────────────────────────
   // Replaces the previous QUERY-based "Out of Order Rooms" section.
-  // COUNTIF formulas are direct and always compile data correctly.
+  // COUNTIF formulas are more reliable than QUERY for simple counting operations.
   sheet.getRange('D4:E4').merge()
     .setValue('Work Order Status')
     .setBackground('#1F4E78')
@@ -738,11 +738,13 @@ function createDashboardSheet_(spreadsheet) {
   sheet.setRowHeight(11, 24);
 
   // Filter rows where priority is Critical or High and work order is not yet Completed.
-  // SORT ascending on column 4 of B:G range (Priority = E) so "Critical" precedes "High".
-  const critHighBase = "SORT(FILTER('Active Work Orders'!B4:G250,"
-    + "('Active Work Orders'!E4:E250=\"Critical\")+('Active Work Orders'!E4:E250=\"High\"),"
-    + "'Active Work Orders'!G4:G250<>\"Completed\","
-    + "'Active Work Orders'!B4:B250<>\"\"),4,TRUE)";
+  // SORT ascending on column 4 of B:G result (Priority = E) so "Critical" precedes "High".
+  // The range 'Active Work Orders'!B4:G250 maps to 1-based indices: 1=Room(B), 2=IssueType(C), 4=Priority(E).
+  const woDataRange = "'Active Work Orders'!B4:G250";
+  const critHighBase = `SORT(FILTER(${woDataRange},`
+    + `('Active Work Orders'!E4:E250="Critical")+('Active Work Orders'!E4:E250="High"),`
+    + `'Active Work Orders'!G4:G250<>"Completed",`
+    + `'Active Work Orders'!B4:B250<>""),4,TRUE)`;
   for (let row = 12; row <= 16; row += 1) {
     const offset = row - 11;
     // Within B4:G250: col 1=Room(B), col 2=IssueType(C), col 4=Priority(E)
@@ -768,7 +770,7 @@ function createDashboardSheet_(spreadsheet) {
   const pmDaysRemainingSortIndex = ROOM_INSPECTIONS_DAYS_REMAINING_SORT_INDEX;
 
   sheet.getRange('J10:O10').merge()
-    .setValue('🔔  Upcoming PM — Due Within 7 Days')
+    .setValue(`🔔  Upcoming PM — Due Within ${PM_UPCOMING_THRESHOLD_DAYS} Days`)
     .setBackground('#1F4E78')
     .setFontColor('#FFFFFF')
     .setFontWeight('bold')
