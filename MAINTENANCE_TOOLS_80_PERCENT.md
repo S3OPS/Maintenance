@@ -178,11 +178,11 @@ Scope: Excludes all pool-related tools and chemicals; emphasizes guest rooms, pu
 ## 13) Fairfield by Marriott / Bonvoy Audit-Readiness Additions
 
 - Telescoping inspection mirror + magnetic pickup tool
-- Borescope / inspection camera for behind casegoods, under tubs, above ceilings, and inside wall/ceiling cavities
+- Borescope / inspection camera with protective case for behind casegoods, under tubs, above ceilings, and inside wall/ceiling cavities
 - Probe thermometer for domestic hot-water spot checks in guest rooms and public restrooms
 - Finish-safe trim/pry tools for access panels, guest-room hardware, and guest-room furniture/casegoods without cosmetic damage
 - Tamper-resistant/security bit set dedicated to guest-room fixtures, bathroom accessories, and public-area hardware
-- Dedicated audit cart/bin stocked for fast room turns: touch-up supplies, spare lamps, batteries, caulk, cover plates, and common fasteners
+- Dedicated audit cart/bin stocked for pre-audit room inspections, room turns, and post-repair punch lists: touch-up supplies, spare lamps, batteries, caulk, cover plates, and common fasteners
 
 ---
 
