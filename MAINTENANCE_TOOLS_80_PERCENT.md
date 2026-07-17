@@ -21,6 +21,7 @@ Scope: Excludes all pool-related tools and chemicals; emphasizes guest rooms, pu
   - Phillips (#0, #1, #2, #3), flat/slotted, Torx, tamper-resistant Torx, square/Robertson, and SAE/metric hex bits
   - Magnetic bit holder, quick-change chuck, right-angle attachment, offset attachment, and flexible extension
   - Nut setters plus 1/4" hex-to-socket adapters for light-duty fasteners
+  - Spare battery or fast-charge setup sized to cover a full shift of room turns and punch-list work
 - Multi-bit screwdriver set (manual backup; Phillips, flat, Torx, square)
 - Complete socket sets: 1/4" and 3/8" drive, SAE + metric, shallow + deep, ratchets, extensions, and universal joints
 - Combination wrench sets (SAE + metric)
@@ -182,7 +183,6 @@ Scope: Excludes all pool-related tools and chemicals; emphasizes guest rooms, pu
 - Finish-safe trim/pry tools for access panels, guest-room hardware, and guest-room furniture/casegoods without cosmetic damage
 - Tamper-resistant/security bit set dedicated to guest-room fixtures, bathroom accessories, and public-area hardware
 - Dedicated audit cart/bin stocked for fast room turns: touch-up supplies, spare lamps, batteries, caulk, cover plates, and common fasteners
-- Keep final compliance aligned with current Marriott/Fairfield brand standards, local code, and property SOPs before each audit cycle
 
 ---
 
@@ -205,5 +205,6 @@ Scope: Excludes all pool-related tools and chemicals; emphasizes guest rooms, pu
 ## Notes
 
 - This list intentionally excludes all pool-specific items.
+- Confirm final tool and inspection requirements against current Marriott/Fairfield brand standards, local code, and property SOPs before each audit cycle.
 - Standardize battery platform/brand where possible to reduce downtime.
 - Keep duplicate daily-use hand tools on both the job cart and in the shop.
