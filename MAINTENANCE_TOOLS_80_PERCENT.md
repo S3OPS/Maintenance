@@ -1,8 +1,8 @@
 # Hotel Maintenance Tools List (Google Docs-Ready)
 
 Prepared for: Hotel Maintenance Department  
-Purpose: Build a complete tool set that covers ~80% of day-to-day maintenance work orders  
-Scope: Excludes all pool-related tools and chemicals
+Purpose: Build a complete tool set that covers ~80% of day-to-day maintenance work orders and supports Fairfield by Marriott / Bonvoy audit readiness  
+Scope: Excludes all pool-related tools and chemicals; emphasizes guest rooms, public areas, life-safety checks, and preventive-maintenance verification
 
 ---
 
@@ -17,7 +17,14 @@ Scope: Excludes all pool-related tools and chemicals
 
 ## 1) Everyday Carry / Daily-Use Core
 
-- Multi-bit screwdriver set (Phillips, flat, Torx, square)
+- Rechargeable electric screwdriver kit with full bit assortment and attachments:
+  - Phillips (#0, #1, #2, #3), flat/slotted, Torx, tamper-resistant Torx, square/Robertson, and SAE/metric hex bits
+  - Magnetic bit holder, quick-change chuck, right-angle attachment, offset attachment, and flexible extension
+  - Nut setters plus 1/4" hex-to-socket adapters for light-duty fasteners
+- Multi-bit screwdriver set (manual backup; Phillips, flat, Torx, square)
+- Complete socket sets: 1/4" and 3/8" drive, SAE + metric, shallow + deep, ratchets, extensions, and universal joints
+- Combination wrench sets (SAE + metric)
+- Ratcheting wrench sets (SAE + metric)
 - Nut drivers (1/4", 5/16", 3/8")
 - Pliers set (needle-nose, slip-joint, channel-lock, linesman)
 - Adjustable wrench (8" and 12")
@@ -37,7 +44,8 @@ Scope: Excludes all pool-related tools and chemicals
 - Fish tape
 - Electrical tape + heat shrink assortment
 - Wire nuts, Wago connectors, butt connectors
-- Outlet/receptacle tester (GFCI capable)
+- Outlet/receptacle tester (GFCI/AFCI capable)
+- Circuit tracer / breaker finder
 - Spare breakers (common sizes used on-site)
 - Label maker or wire labeling tags
 
@@ -53,6 +61,7 @@ Scope: Excludes all pool-related tools and chemicals
 - Closet auger (toilet snake)
 - Drain auger (handheld + drill-attach type)
 - Plunger set (sink + toilet styles)
+- Water pressure gauge
 - Thread seal tape + pipe dope
 
 ## 4) HVAC / Mechanical (Light Service)
@@ -64,6 +73,7 @@ Scope: Excludes all pool-related tools and chemicals
 - Clamp meter (or multimeter with amp clamp)
 - Capacitor tester (or meter with capacitance function)
 - Thermometer/hygrometer
+- Moisture meter for leak, wall, ceiling, and PTAC diagnostics
 - Filter pull tool and filter size reference
 - Belt tension gauge (if belt-driven units are present)
 - Shop vacuum (wet/dry) for condensate and cleanup
@@ -133,6 +143,8 @@ Scope: Excludes all pool-related tools and chemicals
 - Hearing protection
 - Dust masks/respirators (task-appropriate)
 - Lockout/tagout kit
+- Smoke / CO detector functional test kit (test aerosol, magnet/test key, pole as required)
+- Emergency light test key + battery tester
 - Fire extinguisher (maintenance shop area)
 - First aid kit (shop + mobile kit)
 - Spill response kit (oil/chemical absorbents)
@@ -145,7 +157,7 @@ Scope: Excludes all pool-related tools and chemicals
 - Parts bins with labels
 - Fastener organizer (screws/anchors/nuts/bolts)
 - Battery charging station
-- Inventory clipboard or tablet for parts tracking
+- Inventory clipboard or tablet for parts tracking, PM logs, and audit photo documentation
 - Permanent markers, grease pencils, notepads
 
 ## 12) Consumables and Common Repair Materials
@@ -158,14 +170,26 @@ Scope: Excludes all pool-related tools and chemicals
 - Patching: drywall compound, mesh tape, spackle
 - Cleaning: degreaser, disinfectant, descaler, glass cleaner
 - Lubricants: silicone spray, penetrating oil, white lithium grease
-- Filters, belts, and common OEM replacement parts for on-site equipment
+- Lamps/bulbs, batteries, and common guest-room device power cells (locks, thermostats, remotes, detectors, emergency lights)
+- PTAC filters, condensate treatment tablets, and common OEM room-equipment replacement parts
+- Filters, belts, and common OEM replacement parts for central plant and back-of-house equipment
+
+## 13) Fairfield by Marriott / Bonvoy Audit-Readiness Additions
+
+- Telescoping inspection mirror + magnetic pickup tool
+- Borescope / inspection camera for behind casegoods, under tubs, above ceilings, and inside wall/ceiling cavities
+- Probe thermometer for domestic hot-water spot checks in guest rooms and public restrooms
+- Finish-safe trim/pry tools for access panels, guest-room hardware, and casegoods without cosmetic damage
+- Tamper-resistant/security bit set dedicated to guest-room fixtures, bathroom accessories, and public-area hardware
+- Dedicated audit cart/bin stocked for fast room turns: touch-up supplies, spare lamps, batteries, caulk, cover plates, and common fasteners
+- Keep final compliance aligned with current Marriott/Fairfield brand standards, local code, and property SOPs before each audit cycle
 
 ---
 
 ## Purchasing Priority (Recommended)
 
 ### Phase 1 — Must Have Immediately
-- Sections: 1, 2, 3, 9, 10
+- Sections: 1, 2, 3, 9, 10, 13
 - Goal: Safely handle core daily work orders
 
 ### Phase 2 — High-Impact Next Purchases
