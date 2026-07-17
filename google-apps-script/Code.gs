@@ -12,6 +12,9 @@ const SHEET_ORDER = [
 
 const PM_CYCLE_DAYS = 30;
 const PM_UPCOMING_THRESHOLD_DAYS = 7;
+const DATA_START_ROW = 4;
+const DATA_END_ROW = 250;
+const DATA_ROW_COUNT = DATA_END_ROW - DATA_START_ROW + 1;
 
 const ROOM_INSPECTION_PM_SECTIONS = [
   {
@@ -159,6 +162,7 @@ const MONTHLY_TASKS = [
 
 const WORK_ORDER_LOCATIONS = [
   'Other',
+  'Fitness',
   '101',
   '102',
   '103',
@@ -208,6 +212,7 @@ const WORK_ORDER_LOCATIONS = [
   '401',
   '402',
   '403',
+  '404',
   '404',
   '405',
   '406',
@@ -265,9 +270,9 @@ function buildFairfieldMaintenanceProject() {
   createRoomInspectionsSheet_(spreadsheet);
   createActiveWorkOrdersSheet_(spreadsheet);
   createInventorySheet_(spreadsheet);
-  createTaskSheet_(spreadsheet, 'Daily Tasks', 'Daily Maintenance Tasks', 'Use this sheet to manage daily building checks, hotel operations walk-throughs, and shift handoffs.', DAILY_TASKS);
-  createTaskSheet_(spreadsheet, 'Weekly Tasks', 'Weekly Maintenance Tasks', 'Use this sheet to plan recurring weekly preventive maintenance work.', WEEKLY_TASKS);
-  createTaskSheet_(spreadsheet, 'Monthly Tasks', 'Monthly Maintenance Tasks', 'Use this sheet to track higher-touch preventive maintenance and inventory routines.', MONTHLY_TASKS);
+  createTaskSheet_(spreadsheet, 'Daily Tasks', 'Daily Maintenance Tasks', 'Use this sheet to manage daily building checks, hotel operations walk-throughs, and shift handoffs.', DAILY_TASKS, 1);
+  createTaskSheet_(spreadsheet, 'Weekly Tasks', 'Weekly Maintenance Tasks', 'Use this sheet to plan recurring weekly preventive maintenance work.', WEEKLY_TASKS, 7);
+  createTaskSheet_(spreadsheet, 'Monthly Tasks', 'Monthly Maintenance Tasks', 'Use this sheet to track higher-touch preventive maintenance and inventory routines.', MONTHLY_TASKS, PM_CYCLE_DAYS);
   createDashboardSheet_(spreadsheet);
   spreadsheet.setActiveSheet(spreadsheet.getSheetByName('Dashboard'));
   SpreadsheetApp.flush();
@@ -441,10 +446,10 @@ function createRoomInspectionPmSheet_(spreadsheet) {
   sectionRows.forEach((sectionRow) => sheet.setRowHeight(sectionRow, 26));
 
   sheet.setConditionalFormatRules([
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Pass').setBackground('#C6EFCE').setRanges([sheet.getRange('C10:C250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Follow-Up').setBackground('#FFEB9C').setRanges([sheet.getRange('C10:C250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Fail').setBackground('#FFC7CE').setRanges([sheet.getRange('C10:C250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('N/A').setBackground('#E7E6E6').setRanges([sheet.getRange('C10:C250')]).build()
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Pass').setBackground('#C6EFCE').setRanges([sheet.getRange(10, 3, lastRow - 9, 1)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Follow-Up').setBackground('#FFEB9C').setRanges([sheet.getRange(10, 3, lastRow - 9, 1)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Fail').setBackground('#FFC7CE').setRanges([sheet.getRange(10, 3, lastRow - 9, 1)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('N/A').setBackground('#E7E6E6').setRanges([sheet.getRange(10, 3, lastRow - 9, 1)]).build()
   ]);
 }
 
@@ -495,15 +500,15 @@ function createRoomInspectionsSheet_(spreadsheet) {
 
 function createActiveWorkOrdersSheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Active Work Orders');
-  const headers = ['Ticket ID', 'Room/Location', 'Issue Type', 'Issue Description', 'Priority', 'Date Reported', 'Status'];
+  const headers = ['Ticket ID', 'Room/Location', 'Issue Type', 'Issue Description', 'Priority', 'Date Reported', 'Status', 'Days Open', 'SLA Status'];
   applyTitle_(sheet, 'Active Work Orders', 'Track guest- or staff-reported issues that need immediate attention and follow-up.', headers.length);
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
-  applyBodyStyle_(sheet.getRange(4, 1, 247, headers.length));
-  sheet.getRange(3, 1, 248, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
-  setColumnWidths_(sheet, [110, 150, 130, 320, 100, 120, 150]);
+  applyBodyStyle_(sheet.getRange(DATA_START_ROW, 1, DATA_ROW_COUNT, headers.length));
+  sheet.getRange(3, 1, DATA_ROW_COUNT + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
+  setColumnWidths_(sheet, [110, 150, 130, 320, 100, 120, 150, 90, 120]);
   sheet.setFrozenRows(3);
-  sheet.getRange(3, 1, 248, headers.length).createFilter();
+  sheet.getRange(3, 1, DATA_ROW_COUNT + 1, headers.length).createFilter();
   sheet.setHiddenGridlines(true);
 
   const lists = spreadsheet.getSheetByName('Lists');
@@ -512,78 +517,93 @@ function createActiveWorkOrdersSheet_(spreadsheet) {
   const issueTypeRule = SpreadsheetApp.newDataValidation().requireValueInList(WORK_ORDER_ISSUE_TYPES, true).setAllowInvalid(false).build();
   const statusRule = SpreadsheetApp.newDataValidation().requireValueInList(WORK_ORDER_STATUSES, true).setAllowInvalid(false).build();
 
-  sheet.getRange('B4:B250').setDataValidation(locationRule);
-  sheet.getRange('C4:C250').setDataValidation(issueTypeRule);
-  sheet.getRange('E4:E250').setDataValidation(priorityRule);
-  sheet.getRange('F4:F250').setNumberFormat('yyyy-mm-dd').setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
-  sheet.getRange('G4:G250').setDataValidation(statusRule);
+  sheet.getRange(`B${DATA_START_ROW}:B${DATA_END_ROW}`).setDataValidation(locationRule);
+  sheet.getRange(`C${DATA_START_ROW}:C${DATA_END_ROW}`).setDataValidation(issueTypeRule);
+  sheet.getRange(`E${DATA_START_ROW}:E${DATA_END_ROW}`).setDataValidation(priorityRule);
+  sheet.getRange(`F${DATA_START_ROW}:F${DATA_END_ROW}`).setNumberFormat('yyyy-mm-dd').setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
+  sheet.getRange(`G${DATA_START_ROW}:G${DATA_END_ROW}`).setDataValidation(statusRule);
 
   // Auto-generate Ticket ID when the Status cell (column G) is selected via dropdown.
   // ROW()-3 converts the sheet row to a 1-based sequence (rows 1-3 are title and header; data begins at row 4).
   // The ID is tied to the row position so each row always carries a fixed, predictable ID (e.g. WO-001 … WO-247).
-  sheet.getRange(4, 1, 247, 1).setFormulaR1C1('=IF(RC[6]<>"","WO-"&TEXT(ROW()-3,"000"),"")');
-  sheet.getRange('A4:A250').setHorizontalAlignment('center');
+  sheet.getRange(DATA_START_ROW, 1, DATA_ROW_COUNT, 1).setFormulaR1C1('=IF(RC[6]<>"","WO-"&TEXT(ROW()-3,"000"),"")');
+  sheet.getRange(DATA_START_ROW, 8, DATA_ROW_COUNT, 1).setFormulaR1C1('=IF(OR(RC[-2]="",RC[-1]="Completed"),"",TODAY()-RC[-2])');
+  sheet.getRange(DATA_START_ROW, 9, DATA_ROW_COUNT, 1).setFormulaR1C1('=IF(RC[-2]="","",IF(RC[-2]="Completed","Closed",IF(RC[-1]="","",IF(RC[-4]="Critical",IF(RC[-1]>1,"Over SLA",IF(RC[-1]>=1,"Due Soon","On Track")),IF(RC[-4]="High",IF(RC[-1]>2,"Over SLA",IF(RC[-1]>=2,"Due Soon","On Track")),IF(RC[-4]="Medium",IF(RC[-1]>5,"Over SLA",IF(RC[-1]>=5,"Due Soon","On Track")),IF(RC[-1]>10,"Over SLA",IF(RC[-1]>=10,"Due Soon","On Track"))))))))');
+  sheet.getRange(`A${DATA_START_ROW}:A${DATA_END_ROW}`).setHorizontalAlignment('center');
+  sheet.getRange(`F${DATA_START_ROW}:F${DATA_END_ROW}`).setNumberFormat('yyyy-mm-dd');
+  sheet.getRange(`H${DATA_START_ROW}:H${DATA_END_ROW}`).setNumberFormat('0');
 
   if (WORK_ORDERS.length > 0) {
     sheet.getRange(4, 2, WORK_ORDERS.length, WORK_ORDERS[0].length).setValues(WORK_ORDERS);
   }
 
   sheet.setConditionalFormatRules([
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Not Started').setBackground('#FFEB9C').setRanges([sheet.getRange('G4:G250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Work In Progress').setBackground('#D9EAF7').setRanges([sheet.getRange('G4:G250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Completed').setBackground('#C6EFCE').setRanges([sheet.getRange('G4:G250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('High').setBackground('#FFC7CE').setRanges([sheet.getRange('E4:E250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Critical').setBackground('#EA9999').setRanges([sheet.getRange('E4:E250')]).build()
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Not Started').setBackground('#FFEB9C').setRanges([sheet.getRange(`G${DATA_START_ROW}:G${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Work In Progress').setBackground('#D9EAF7').setRanges([sheet.getRange(`G${DATA_START_ROW}:G${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Completed').setBackground('#C6EFCE').setRanges([sheet.getRange(`G${DATA_START_ROW}:G${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('High').setBackground('#FFC7CE').setRanges([sheet.getRange(`E${DATA_START_ROW}:E${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Critical').setBackground('#EA9999').setRanges([sheet.getRange(`E${DATA_START_ROW}:E${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Due Soon').setBackground('#FFEB9C').setRanges([sheet.getRange(`I${DATA_START_ROW}:I${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Over SLA').setBackground('#FFC7CE').setRanges([sheet.getRange(`I${DATA_START_ROW}:I${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Closed').setBackground('#C6EFCE').setRanges([sheet.getRange(`I${DATA_START_ROW}:I${DATA_END_ROW}`)]).build()
   ]);
 }
 
 function createInventorySheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Parts Inventory');
-  const headers = ['Part ID', 'Category', 'Part Name', 'Equipment/Area', 'Vendor', 'Unit Cost', 'On Hand', 'Min Level', 'Reorder Qty', 'Lead Time (Days)', 'Reorder Status', 'Critical Item', 'Storage Location', 'Notes'];
+  const headers = ['Part ID', 'Category', 'Part Name', 'Equipment/Area', 'Vendor', 'Unit Cost', 'On Hand', 'Min Level', 'Reorder Qty', 'Lead Time (Days)', 'Reorder Status', 'Critical Item', 'Storage Location', 'Notes', 'Extended Value', 'Reorder Value'];
   applyTitle_(sheet, 'Parts Inventory', 'Manage critical spares, reorder triggers, vendors, and storage locations.', headers.length);
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
-  sheet.getRange(4, 1, INVENTORY_ITEMS.length, headers.length).setValues(INVENTORY_ITEMS);
-  INVENTORY_ITEMS.forEach((_, index) => {
-    const row = index + 4;
-    sheet.getRange(row, 11).setFormula(`=IF(G${row}<=H${row},"Reorder","OK")`);
-  });
+  sheet.getRange(4, 1, INVENTORY_ITEMS.length, INVENTORY_ITEMS[0].length).setValues(INVENTORY_ITEMS);
+  sheet.getRange(DATA_START_ROW, 11, DATA_ROW_COUNT, 1).setFormulaR1C1('=IF(OR(RC[-4]="",RC[-3]=""),"",IF(RC[-4]<=RC[-3],"Reorder","OK"))');
+  sheet.getRange(DATA_START_ROW, 15, DATA_ROW_COUNT, 1).setFormulaR1C1('=IF(OR(RC[-9]="",RC[-8]=""),"",RC[-9]*RC[-8])');
+  sheet.getRange(DATA_START_ROW, 16, DATA_ROW_COUNT, 1).setFormulaR1C1('=IF(OR(RC[-10]="",RC[-7]=""),"",RC[-10]*RC[-7])');
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
-  applyBodyStyle_(sheet.getRange(4, 1, INVENTORY_ITEMS.length, headers.length));
-  sheet.getRange(3, 1, INVENTORY_ITEMS.length + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
-  setColumnWidths_(sheet, [100, 110, 140, 140, 140, 90, 75, 75, 85, 110, 110, 90, 120, 240]);
+  applyBodyStyle_(sheet.getRange(DATA_START_ROW, 1, DATA_ROW_COUNT, headers.length));
+  sheet.getRange(3, 1, DATA_ROW_COUNT + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
+  setColumnWidths_(sheet, [100, 110, 140, 140, 140, 90, 75, 75, 85, 110, 110, 90, 120, 240, 110, 110]);
   sheet.setFrozenRows(3);
-  sheet.getRange(3, 1, INVENTORY_ITEMS.length + 1, headers.length).createFilter();
-  sheet.getRange('F4:F250').setNumberFormat('$#,##0.00');
+  sheet.getRange(3, 1, DATA_ROW_COUNT + 1, headers.length).createFilter();
+  sheet.getRange(`F${DATA_START_ROW}:F${DATA_END_ROW}`).setNumberFormat('$#,##0.00');
+  sheet.getRange(`O${DATA_START_ROW}:P${DATA_END_ROW}`).setNumberFormat('$#,##0.00');
 
   const lists = spreadsheet.getSheetByName('Lists');
   const criticalRule = SpreadsheetApp.newDataValidation().requireValueInRange(lists.getRange('E4:E5'), true).setAllowInvalid(false).build();
-  sheet.getRange('L4:L250').setDataValidation(criticalRule);
+  sheet.getRange(`L${DATA_START_ROW}:L${DATA_END_ROW}`).setDataValidation(criticalRule);
   sheet.setConditionalFormatRules([
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Reorder').setBackground('#FFEB9C').setRanges([sheet.getRange('K4:K250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Yes').setBackground('#D9EAF7').setRanges([sheet.getRange('L4:L250')]).build()
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Reorder').setBackground('#FFEB9C').setRanges([sheet.getRange(`K${DATA_START_ROW}:K${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Yes').setBackground('#D9EAF7').setRanges([sheet.getRange(`L${DATA_START_ROW}:L${DATA_END_ROW}`)]).build()
   ]);
 }
 
-function createTaskSheet_(spreadsheet, sheetName, title, subtitle, rows) {
+function createTaskSheet_(spreadsheet, sheetName, title, subtitle, rows, cycleDays) {
   const sheet = spreadsheet.getSheetByName(sheetName);
-  const headers = ['Task ID', 'Area', 'Task', 'Assigned To', 'Frequency', 'Due Day/Date', 'Est. Minutes', 'Status', 'Last Completed', 'Notes'];
+  const headers = ['Task ID', 'Area', 'Task', 'Assigned To', 'Frequency', 'Due Day/Date', 'Est. Minutes', 'Status', 'Last Completed', 'Notes', 'Days Since Last Completed', 'Task Health'];
   applyTitle_(sheet, title, subtitle, headers.length);
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
-  sheet.getRange(4, 1, rows.length, headers.length).setValues(rows);
+  sheet.getRange(4, 1, rows.length, rows[0].length).setValues(rows);
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
-  applyBodyStyle_(sheet.getRange(4, 1, rows.length, headers.length));
-  sheet.getRange(3, 1, rows.length + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
-  setColumnWidths_(sheet, [90, 120, 340, 130, 90, 120, 90, 110, 110, 240]);
+  applyBodyStyle_(sheet.getRange(DATA_START_ROW, 1, DATA_ROW_COUNT, headers.length));
+  sheet.getRange(3, 1, DATA_ROW_COUNT + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
+  setColumnWidths_(sheet, [90, 120, 340, 130, 90, 120, 90, 110, 110, 240, 120, 110]);
   sheet.setFrozenRows(3);
-  sheet.getRange(3, 1, rows.length + 1, headers.length).createFilter();
+  sheet.getRange(3, 1, DATA_ROW_COUNT + 1, headers.length).createFilter();
 
   const lists = spreadsheet.getSheetByName('Lists');
   const statusRule = SpreadsheetApp.newDataValidation().requireValueInRange(lists.getRange('D4:D7'), true).setAllowInvalid(false).build();
-  sheet.getRange('H4:H250').setDataValidation(statusRule);
+  sheet.getRange(`H${DATA_START_ROW}:H${DATA_END_ROW}`).setDataValidation(statusRule);
+  sheet.getRange(DATA_START_ROW, 11, DATA_ROW_COUNT, 1).setFormulaR1C1('=IF(RC[-2]="","",TODAY()-RC[-2])');
+  sheet.getRange(DATA_START_ROW, 12, DATA_ROW_COUNT, 1).setFormulaR1C1(`=IF(RC[-4]="","",IF(RC[-4]="Complete","Complete",IF(RC[-4]="Deferred","Deferred",IF(RC[-1]="","Needs Update",IF(RC[-1]>${cycleDays},"Overdue",IF(RC[-1]>=${cycleDays},"Due Soon","Current"))))))`);
+  sheet.getRange(`I${DATA_START_ROW}:I${DATA_END_ROW}`).setNumberFormat('yyyy-mm-dd');
+  sheet.getRange(`K${DATA_START_ROW}:K${DATA_END_ROW}`).setNumberFormat('0');
   sheet.setConditionalFormatRules([
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Complete').setBackground('#C6EFCE').setRanges([sheet.getRange('H4:H250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('In Progress').setBackground('#FFEB9C').setRanges([sheet.getRange('H4:H250')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Deferred').setBackground('#FFC7CE').setRanges([sheet.getRange('H4:H250')]).build()
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Complete').setBackground('#C6EFCE').setRanges([sheet.getRange(`H${DATA_START_ROW}:H${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('In Progress').setBackground('#FFEB9C').setRanges([sheet.getRange(`H${DATA_START_ROW}:H${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Deferred').setBackground('#FFC7CE').setRanges([sheet.getRange(`H${DATA_START_ROW}:H${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Current').setBackground('#C6EFCE').setRanges([sheet.getRange(`L${DATA_START_ROW}:L${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Due Soon').setBackground('#FFEB9C').setRanges([sheet.getRange(`L${DATA_START_ROW}:L${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Overdue').setBackground('#FFC7CE').setRanges([sheet.getRange(`L${DATA_START_ROW}:L${DATA_END_ROW}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Needs Update').setBackground('#D9EAF7').setRanges([sheet.getRange(`L${DATA_START_ROW}:L${DATA_END_ROW}`)]).build()
   ]);
 }
 
@@ -622,16 +642,13 @@ function createDashboardSheet_(spreadsheet) {
   // ─── KPI TILES (A4:B7) ───────────────────────────────────────
   const kpiData = [
     ['🎟️  Open Tickets',
-     "=COUNTIF('Active Work Orders'!G4:G250,\"Not Started\")+COUNTIF('Active Work Orders'!G4:G250,\"Work In Progress\")"],
+     `=COUNTIF('Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW},"Not Started")+COUNTIF('Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW},"Work In Progress")`],
     ['🏠  Rooms w/ Open WOs',
-     "=IFERROR(COUNTUNIQUE(FILTER('Active Work Orders'!B4:B250,'Active Work Orders'!A4:A250<>\"\","
-     + "'Active Work Orders'!B4:B250<>\"\","
-     + "'Active Work Orders'!B4:B250<>\"Other\","
-     + "'Active Work Orders'!G4:G250<>\"Completed\")),0)"],
+     `=IFERROR(COUNTUNIQUE(FILTER('Active Work Orders'!B${DATA_START_ROW}:B${DATA_END_ROW},'Active Work Orders'!A${DATA_START_ROW}:A${DATA_END_ROW}<>"",'Active Work Orders'!B${DATA_START_ROW}:B${DATA_END_ROW}<>"",REGEXMATCH('Active Work Orders'!B${DATA_START_ROW}:B${DATA_END_ROW},"^\\\\d+$"),'Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW}<>"Completed")),0)`],
     ['⚠️  PMs Overdue',
-     "=COUNTIF('Room Inspections'!N4:N250,\"Overdue\")"],
+     `=COUNTIF('Room Inspections'!N${DATA_START_ROW}:N${DATA_END_ROW},"Overdue")`],
     ['📦  Parts to Reorder',
-     "=COUNTIF('Parts Inventory'!K4:K250,\"Reorder\")"]
+     `=COUNTIF('Parts Inventory'!K${DATA_START_ROW}:K${DATA_END_ROW},"Reorder")`]
   ];
   kpiData.forEach(([label, formula], i) => {
     const row = 4 + i;
@@ -668,9 +685,9 @@ function createDashboardSheet_(spreadsheet) {
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle');
   const woStatusRows = [
-    ['Not Started',      "=COUNTIF('Active Work Orders'!G4:G250,\"Not Started\")"],
-    ['Work In Progress', "=COUNTIF('Active Work Orders'!G4:G250,\"Work In Progress\")"],
-    ['Completed',        "=COUNTIF('Active Work Orders'!G4:G250,\"Completed\")"]
+    ['Not Started',      `=COUNTIF('Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW},"Not Started")`],
+    ['Work In Progress', `=COUNTIF('Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW},"Work In Progress")`],
+    ['Completed',        `=COUNTIF('Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW},"Completed")`]
   ];
   woStatusRows.forEach(([label, formula], i) => {
     const row = 5 + i;
@@ -691,10 +708,10 @@ function createDashboardSheet_(spreadsheet) {
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle');
   const priorityRows = [
-    ['🚨 Critical', "=COUNTIF('Active Work Orders'!E4:E250,\"Critical\")"],
-    ['🔴 High',     "=COUNTIF('Active Work Orders'!E4:E250,\"High\")"],
-    ['🟡 Medium',   "=COUNTIF('Active Work Orders'!E4:E250,\"Medium\")"],
-    ['🟢 Low',      "=COUNTIF('Active Work Orders'!E4:E250,\"Low\")"]
+    ['🚨 Critical', `=COUNTIFS('Active Work Orders'!E${DATA_START_ROW}:E${DATA_END_ROW},"Critical",'Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW},"<>Completed")`],
+    ['🔴 High',     `=COUNTIFS('Active Work Orders'!E${DATA_START_ROW}:E${DATA_END_ROW},"High",'Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW},"<>Completed")`],
+    ['🟡 Medium',   `=COUNTIFS('Active Work Orders'!E${DATA_START_ROW}:E${DATA_END_ROW},"Medium",'Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW},"<>Completed")`],
+    ['🟢 Low',      `=COUNTIFS('Active Work Orders'!E${DATA_START_ROW}:E${DATA_END_ROW},"Low",'Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW},"<>Completed")`]
   ];
   priorityRows.forEach(([label, formula], i) => {
     const row = 5 + i;
@@ -740,11 +757,11 @@ function createDashboardSheet_(spreadsheet) {
   // Filter rows where priority is Critical or High and work order is not yet Completed.
   // SORT ascending on column 4 of B:G result (Priority = E) so "Critical" precedes "High".
   // The range 'Active Work Orders'!B4:G250 maps to 1-based indices: 1=Room(B), 2=IssueType(C), 4=Priority(E).
-  const woDataRange = "'Active Work Orders'!B4:G250";
+  const woDataRange = `'Active Work Orders'!B${DATA_START_ROW}:G${DATA_END_ROW}`;
   const critHighBase = `SORT(FILTER(${woDataRange},`
-    + `('Active Work Orders'!E4:E250="Critical")+('Active Work Orders'!E4:E250="High"),`
-    + `'Active Work Orders'!G4:G250<>"Completed",`
-    + `'Active Work Orders'!B4:B250<>""),4,TRUE)`;
+    + `('Active Work Orders'!E${DATA_START_ROW}:E${DATA_END_ROW}="Critical")+('Active Work Orders'!E${DATA_START_ROW}:E${DATA_END_ROW}="High"),`
+    + `'Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW}<>"Completed",`
+    + `'Active Work Orders'!B${DATA_START_ROW}:B${DATA_END_ROW}<>""),4,TRUE)`;
   for (let row = 12; row <= 16; row += 1) {
     const offset = row - 11;
     // Within B4:G250: col 1=Room(B), col 2=IssueType(C), col 4=Priority(E)
@@ -812,7 +829,7 @@ function createDashboardSheet_(spreadsheet) {
     const row = issueTypeStartRow + 2 + i;
     sheet.getRange(row, 1).setValue(type);
     sheet.getRange(row, 2).setFormula(
-      `=COUNTIFS('Active Work Orders'!C$4:C$250,"${type}",'Active Work Orders'!F$4:F$250,">="&(TODAY()-${PM_CYCLE_DAYS}))`
+      `=COUNTIFS('Active Work Orders'!C$${DATA_START_ROW}:C$${DATA_END_ROW},"${type}",'Active Work Orders'!F$${DATA_START_ROW}:F$${DATA_END_ROW},">="&(TODAY()-${PM_CYCLE_DAYS}),'Active Work Orders'!G$${DATA_START_ROW}:G$${DATA_END_ROW},"<>Completed")`
     );
     sheet.setRowHeight(row, 24);
   });
@@ -825,7 +842,7 @@ function createDashboardSheet_(spreadsheet) {
     .addRange(sheet.getRange(issueTypeStartRow + 1, 1, WORK_ORDER_ISSUE_TYPES.length + 1, 2))
     .setNumHeaders(1)
     .setPosition(issueTypeStartRow, 4, 0, 0)
-    .setOption('title', 'Work Orders by Issue Type – Last 30 Days')
+    .setOption('title', 'Open Work Orders by Issue Type – Last 30 Days')
     .setOption('titleTextStyle', { fontSize: 14, bold: true, color: '#1F4E78' })
     .setOption('legend', { position: 'bottom', alignment: 'center', textStyle: { fontSize: 11, color: '#444444' } })
     .setOption('chartArea', { width: '82%', height: '58%', top: '12%', left: '5%' })
@@ -835,6 +852,78 @@ function createDashboardSheet_(spreadsheet) {
     .setOption('height', 430)
     .build();
   sheet.insertChart(pieChart);
+
+  sheet.getRange('A44:C44').merge()
+    .setValue('Work Order Aging Summary')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  sheet.getRange(45, 1, 1, 3).setValues([['Metric', 'Value', 'Target']]);
+  applyHeaderStyle_(sheet.getRange(45, 1, 1, 3));
+  sheet.getRange(46, 1, 4, 1).setValues([
+    ['Avg Open Days'],
+    ['Due Soon'],
+    ['Over SLA'],
+    ['Open 7+ Days']
+  ]);
+  sheet.getRange('B46').setFormula(`=IFERROR(ROUND(AVERAGE(FILTER('Active Work Orders'!H${DATA_START_ROW}:H${DATA_END_ROW},'Active Work Orders'!H${DATA_START_ROW}:H${DATA_END_ROW}<>"")),1),0)`);
+  sheet.getRange('B47').setFormula(`=COUNTIF('Active Work Orders'!I${DATA_START_ROW}:I${DATA_END_ROW},"Due Soon")`);
+  sheet.getRange('B48').setFormula(`=COUNTIF('Active Work Orders'!I${DATA_START_ROW}:I${DATA_END_ROW},"Over SLA")`);
+  sheet.getRange('B49').setFormula(`=COUNTIFS('Active Work Orders'!H${DATA_START_ROW}:H${DATA_END_ROW},">=7",'Active Work Orders'!G${DATA_START_ROW}:G${DATA_END_ROW},"<>Completed")`);
+  sheet.getRange(46, 3, 4, 1).setValues([
+    ['<= 5'],
+    ['0'],
+    ['0'],
+    ['<= 2']
+  ]);
+  applyBodyStyle_(sheet.getRange('A46:C49'));
+  sheet.getRange('B46:B49').setHorizontalAlignment('center');
+
+  sheet.getRange('E44:I44').merge()
+    .setValue('Task Health Snapshot')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  sheet.getRange(45, 5, 1, 5).setValues([['Task Health', 'Daily', 'Weekly', 'Monthly', 'Total']]);
+  applyHeaderStyle_(sheet.getRange(45, 5, 1, 5));
+  const taskHealthStatuses = ['Current', 'Due Soon', 'Overdue', 'Needs Update', 'Deferred'];
+  taskHealthStatuses.forEach((status, index) => {
+    const row = 46 + index;
+    sheet.getRange(row, 5).setValue(status);
+    sheet.getRange(row, 6).setFormula(`=COUNTIF('Daily Tasks'!L${DATA_START_ROW}:L${DATA_END_ROW},"${status}")`);
+    sheet.getRange(row, 7).setFormula(`=COUNTIF('Weekly Tasks'!L${DATA_START_ROW}:L${DATA_END_ROW},"${status}")`);
+    sheet.getRange(row, 8).setFormula(`=COUNTIF('Monthly Tasks'!L${DATA_START_ROW}:L${DATA_END_ROW},"${status}")`);
+    sheet.getRange(row, 9).setFormula(`=SUM(F${row}:H${row})`);
+  });
+  applyBodyStyle_(sheet.getRange('E46:I50'));
+  sheet.getRange('F46:I50').setHorizontalAlignment('center');
+
+  sheet.getRange('K44:O44').merge()
+    .setValue('Inventory Value Snapshot')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  sheet.getRange(45, 11, 1, 2).setValues([['Metric', 'Value']]);
+  applyHeaderStyle_(sheet.getRange(45, 11, 1, 2));
+  sheet.getRange(46, 11, 4, 1).setValues([
+    ['Total Inventory Value'],
+    ['Reorder Value'],
+    ['Critical Items at Risk'],
+    ['Items to Reorder']
+  ]);
+  sheet.getRange('L46').setFormula(`=IFERROR(SUM('Parts Inventory'!O${DATA_START_ROW}:O${DATA_END_ROW}),0)`);
+  sheet.getRange('L47').setFormula(`=IFERROR(SUMIF('Parts Inventory'!K${DATA_START_ROW}:K${DATA_END_ROW},"Reorder",'Parts Inventory'!P${DATA_START_ROW}:P${DATA_END_ROW}),0)`);
+  sheet.getRange('L48').setFormula(`=COUNTIFS('Parts Inventory'!L${DATA_START_ROW}:L${DATA_END_ROW},"Yes",'Parts Inventory'!K${DATA_START_ROW}:K${DATA_END_ROW},"Reorder")`);
+  sheet.getRange('L49').setFormula(`=COUNTIF('Parts Inventory'!K${DATA_START_ROW}:K${DATA_END_ROW},"Reorder")`);
+  applyBodyStyle_(sheet.getRange('K46:L49'));
+  sheet.getRange('L46:L47').setNumberFormat('$#,##0.00');
+  sheet.getRange('L46:L49').setHorizontalAlignment('center');
 
   // ─── CONDITIONAL FORMATTING ───────────────────────────────────
   sheet.setConditionalFormatRules([
@@ -901,6 +990,21 @@ function createDashboardSheet_(spreadsheet) {
       .setRanges([sheet.getRange('O12:O16')]).build(),
     SpreadsheetApp.newConditionalFormatRule()
       .whenTextEqualTo('Overdue').setBackground('#FFC7CE')
-      .setRanges([sheet.getRange('O12:O16')]).build()
+      .setRanges([sheet.getRange('O12:O16')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberGreaterThan(0).setBackground('#FFEB9C').setFontColor('#9C5700')
+      .setRanges([sheet.getRange('B47')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberGreaterThan(0).setBackground('#FFC7CE').setFontColor('#C00000')
+      .setRanges([sheet.getRange('B48')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberGreaterThan(0).setBackground('#FFC7CE').setFontColor('#C00000')
+      .setRanges([sheet.getRange('I47:I49')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberGreaterThan(0).setBackground('#FFC7CE').setFontColor('#C00000')
+      .setRanges([sheet.getRange('L48')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenNumberGreaterThan(0).setBackground('#FFEB9C').setFontColor('#9C5700')
+      .setRanges([sheet.getRange('L49')]).build()
   ]);
 }
