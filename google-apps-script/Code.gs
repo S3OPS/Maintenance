@@ -812,7 +812,7 @@ function createDashboardSheet_(spreadsheet) {
     const row = issueTypeStartRow + 2 + i;
     sheet.getRange(row, 1).setValue(type);
     sheet.getRange(row, 2).setFormula(
-      `=COUNTIFS('Active Work Orders'!C$4:C$250,"${type}",'Active Work Orders'!F$4:F$250,">="&(TODAY()-30))`
+      `=COUNTIFS('Active Work Orders'!C$4:C$250,"${type}",'Active Work Orders'!F$4:F$250,">="&(TODAY()-${PM_CYCLE_DAYS}))`
     );
     sheet.setRowHeight(row, 24);
   });
@@ -828,7 +828,7 @@ function createDashboardSheet_(spreadsheet) {
     .setOption('title', 'Work Orders by Issue Type – Last 30 Days')
     .setOption('titleTextStyle', { fontSize: 14, bold: true, color: '#1F4E78' })
     .setOption('legend', { position: 'bottom', alignment: 'center', textStyle: { fontSize: 11, color: '#444444' } })
-    .setOption('chartArea', { width: '82%', height: '58%', top: '12%', left: 'auto' })
+    .setOption('chartArea', { width: '82%', height: '58%', top: '12%', left: '5%' })
     .setOption('colors', ['#1F4E78', '#2E75B6', '#4472C4', '#5B9BD5', '#9DC3E6', '#FFC000', '#FF7F40', '#BDD7EE', '#70AD47', '#FF4444'])
     .setOption('pieSliceTextStyle', { fontSize: 10, color: '#FFFFFF' })
     .setOption('width', 700)
@@ -887,10 +887,10 @@ function createDashboardSheet_(spreadsheet) {
       .setRanges([sheet.getRange('H8')]).build(),
     // Critical & High Priority list – Priority column
     SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo('Critical').setBackground('#FFC7CE').setFontColor('#C00000').setFontWeight('bold')
+      .whenTextEqualTo('Critical').setBackground('#FFC7CE').setFontColor('#C00000').setBold(true)
       .setRanges([sheet.getRange('C12:C16')]).build(),
     SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo('High').setBackground('#FFEB9C').setFontColor('#9C5700').setFontWeight('bold')
+      .whenTextEqualTo('High').setBackground('#FFEB9C').setFontColor('#9C5700').setBold(true)
       .setRanges([sheet.getRange('C12:C16')]).build(),
     // PM Status
     SpreadsheetApp.newConditionalFormatRule()
