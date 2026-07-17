@@ -1,6 +1,17 @@
-# Hotel Maintenance Tools List (80% Coverage)
+# Hotel Maintenance Tools List (Google Docs-Ready)
 
-This checklist is designed to cover the most common day-to-day hotel maintenance work orders (excluding pool work).
+Prepared for: Hotel Maintenance Department  
+Purpose: Build a complete tool set that covers ~80% of day-to-day maintenance work orders  
+Scope: Excludes all pool-related tools and chemicals
+
+---
+
+## How to Use This Document in Google Docs
+
+1. Copy this full document into Google Docs.
+2. Keep each section as a heading for quick navigation.
+3. Add checkboxes in Google Docs for items you still need to purchase.
+4. Use the “Purchasing Priority” section to buy in phases.
 
 ---
 
@@ -17,8 +28,6 @@ This checklist is designed to cover the most common day-to-day hotel maintenance
 - Non-contact voltage tester
 - Tool pouch/belt
 
----
-
 ## 2) Electrical (Basic Building Repairs)
 
 - Digital multimeter (true RMS preferred)
@@ -32,38 +41,32 @@ This checklist is designed to cover the most common day-to-day hotel maintenance
 - Spare breakers (common sizes used on-site)
 - Label maker or wire labeling tags
 
----
-
 ## 3) Plumbing (Fixtures, Leaks, Drains)
 
 - Pipe wrenches (10" and 14")
 - Basin wrench
 - Faucet seat wrench / cartridge puller set
 - Tub drain tool
-- Plumber’s pliers/channel locks (large)
+- Large channel-lock pliers
 - Mini tubing cutter (copper/CPVC/PVC)
-- PEX crimp tool + gauge (if PEX used)
+- PEX crimp tool + gauge (if PEX is used)
 - Closet auger (toilet snake)
 - Drain auger (handheld + drill-attach type)
 - Plunger set (sink + toilet styles)
 - Thread seal tape + pipe dope
 
----
-
 ## 4) HVAC / Mechanical (Light Service)
 
-- Manifold gauge set (if handling refrigerant by certified staff)
+- Manifold gauge set (certified refrigerant staff only)
 - Fin comb
 - Coil cleaning sprayer/pump
 - Infrared thermometer
 - Clamp meter (or multimeter with amp clamp)
 - Capacitor tester (or meter with capacitance function)
 - Thermometer/hygrometer
-- Filter pull tool and filter size gauge/reference
-- Belt tension gauge (if belt-driven units exist)
+- Filter pull tool and filter size reference
+- Belt tension gauge (if belt-driven units are present)
 - Shop vacuum (wet/dry) for condensate and cleanup
-
----
 
 ## 5) Carpentry, Drywall, and Paint Touch-Up
 
@@ -80,20 +83,16 @@ This checklist is designed to cover the most common day-to-day hotel maintenance
 - Sanding block + assorted sandpaper
 - Paint touch-up kit (mini rollers, angled brushes, trays)
 
----
-
 ## 6) Doors, Locks, and Hardware
 
 - Hinge pin tool
 - Lock cylinder removal/change kit
 - Door closer adjustment tools (Allen/key set)
 - Hole saw kit (for lockset prep)
-- Chisels (wood)
+- Wood chisel set
 - Strike/latch alignment jig
-- Graphite/dry lock lubricant
+- Graphite or dry lock lubricant
 - Assorted door shims
-
----
 
 ## 7) Furniture, Casegoods, and Guest-Room Fixtures
 
@@ -103,10 +102,8 @@ This checklist is designed to cover the most common day-to-day hotel maintenance
 - Staple gun
 - Furniture clamps
 - Wood glue + quick-set epoxy
-- Adhesive remover and surface-safe cleaners
-- Small precision screwdriver kit (for lamps, controls, accessories)
-
----
+- Adhesive remover + surface-safe cleaners
+- Small precision screwdriver kit (lamps, controls, accessories)
 
 ## 8) Exterior and General Property Upkeep
 
@@ -114,38 +111,32 @@ This checklist is designed to cover the most common day-to-day hotel maintenance
 - Hose reels + heavy-duty hoses/nozzles
 - Leaf blower
 - String trimmer/edger
-- Small hand tools (shovel, rake, pruning shears)
+- Hand tools (shovel, rake, pruning shears)
 - Ice melt spreader (seasonal)
 - Extension cord reels (outdoor rated)
 - Portable work lights
 
----
-
 ## 9) Access Equipment and Material Handling
 
 - Step ladders (4', 6', 8')
-- Extension ladder (24' or appropriate property height)
+- Extension ladder (24' or as required by property)
 - Platform ladder (for overhead work)
 - Ladder stabilizer
 - Hand truck/dolly
 - Flat cart
 - Compact folding work table
 
----
-
 ## 10) Safety, PPE, and Emergency Support
 
 - Cut-resistant gloves + general work gloves
 - Safety glasses + face shields
 - Hearing protection
-- Dust masks/respirators (per task)
+- Dust masks/respirators (task-appropriate)
 - Lockout/tagout kit
-- Fire extinguisher (shop area)
-- First aid kit (maintenance shop + mobile kit)
+- Fire extinguisher (maintenance shop area)
+- First aid kit (shop + mobile kit)
 - Spill response kit (oil/chemical absorbents)
-- Caution/wet-floor signs and barricade tape
-
----
+- Caution/wet-floor signs + barricade tape
 
 ## 11) Shop Organization and Productivity
 
@@ -156,8 +147,6 @@ This checklist is designed to cover the most common day-to-day hotel maintenance
 - Battery charging station
 - Inventory clipboard or tablet for parts tracking
 - Permanent markers, grease pencils, notepads
-
----
 
 ## 12) Consumables and Common Repair Materials
 
@@ -173,16 +162,24 @@ This checklist is designed to cover the most common day-to-day hotel maintenance
 
 ---
 
-## Suggested Purchasing Priority
+## Purchasing Priority (Recommended)
 
-1. **Phase 1 (must-have now):** Sections 1, 2, 3, 9, 10  
-2. **Phase 2 (high impact next):** Sections 4, 5, 6, 12  
-3. **Phase 3 (efficiency upgrades):** Sections 7, 8, 11
+### Phase 1 — Must Have Immediately
+- Sections: 1, 2, 3, 9, 10
+- Goal: Safely handle core daily work orders
+
+### Phase 2 — High-Impact Next Purchases
+- Sections: 4, 5, 6, 12
+- Goal: Reduce outsourced repair calls
+
+### Phase 3 — Efficiency and Completion Upgrades
+- Sections: 7, 8, 11
+- Goal: Improve speed, organization, and finish quality
 
 ---
 
 ## Notes
 
-- This list intentionally excludes pool-specific equipment and chemicals.
-- Standardize brands/battery platforms where possible to reduce charging and replacement issues.
-- Keep duplicate daily-use hand tools on both the job cart and in the shop to reduce downtime.
+- This list intentionally excludes all pool-specific items.
+- Standardize battery platform/brand where possible to reduce downtime.
+- Keep duplicate daily-use hand tools on both the job cart and in the shop.
