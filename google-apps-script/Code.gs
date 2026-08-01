@@ -8,7 +8,8 @@ const SHEET_ORDER = [
   'Monthly Tasks',
   'Carpet Shampoo',
   'Lists',
-  'Room Inspection PM'
+  'Room Inspection PM',
+  'FLUSHMATE SNs'
 ];
 
 const PM_CYCLE_DAYS = 30;
@@ -293,6 +294,7 @@ function buildFairfieldMaintenanceProject() {
   createTaskSheet_(spreadsheet, 'Weekly Tasks', 'Weekly Maintenance Tasks', 'Use this sheet to plan recurring weekly preventive maintenance work.', WEEKLY_TASKS);
   createTaskSheet_(spreadsheet, 'Monthly Tasks', 'Monthly Maintenance Tasks', 'Use this sheet to track higher-touch preventive maintenance and inventory routines.', MONTHLY_TASKS);
   createCarpetShampooSheet_(spreadsheet);
+  createFlushmateSnsSheet_(spreadsheet);
   createDashboardSheet_(spreadsheet);
   spreadsheet.setActiveSheet(spreadsheet.getSheetByName('Dashboard'));
   SpreadsheetApp.flush();
@@ -303,17 +305,14 @@ function prepareWorkbook_(spreadsheet) {
     let sheet = spreadsheet.getSheetByName(name);
     if (!sheet) {
       sheet = spreadsheet.insertSheet(name);
+      resetSheet_(sheet);
+    } else {
+      refreshSheet_(sheet);
     }
-    resetSheet_(sheet);
     spreadsheet.setActiveSheet(sheet);
     spreadsheet.moveActiveSheet(index + 1);
   });
-
-  spreadsheet.getSheets().forEach((sheet) => {
-    if (!SHEET_ORDER.includes(sheet.getName())) {
-      spreadsheet.deleteSheet(sheet);
-    }
-  });
+  // Sheets not in SHEET_ORDER are left intact to preserve extra tabs and any user data they contain.
 }
 
 function resetSheet_(sheet) {
@@ -332,6 +331,30 @@ function resetSheet_(sheet) {
   sheet.showSheet();
   sheet.setFrozenRows(0);
   sheet.setFrozenColumns(0);
+}
+
+// Non-destructive refresh: clears formatting, validations, rules, bandings, and charts
+// but leaves all cell values intact so user-entered data is preserved.
+function refreshSheet_(sheet) {
+  const fullRange = sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns());
+  fullRange.breakApart();
+  fullRange.clearFormat();
+  fullRange.clearDataValidations();
+  sheet.setConditionalFormatRules([]);
+  const filter = sheet.getFilter();
+  if (filter) {
+    filter.remove();
+  }
+  sheet.getBandings().forEach((banding) => banding.remove());
+  sheet.getCharts().forEach((chart) => sheet.removeChart(chart));
+  sheet.showSheet();
+  sheet.setFrozenRows(0);
+  sheet.setFrozenColumns(0);
+}
+
+// Returns true if the sheet already has data in or below startRow (indicating a previously built sheet).
+function hasUserData_(sheet, startRow) {
+  return sheet.getLastRow() >= startRow;
 }
 
 function applyTitle_(sheet, title, subtitle, mergeColumns) {
@@ -479,7 +502,9 @@ function createRoomInspectionsSheet_(spreadsheet) {
   applyTitle_(sheet, 'Detailed Room Inspections - Marriott Fairfield', 'Track room inspections, PM intervals, and follow-up status with a 30-day maintenance cycle.', headers.length);
   const dataWidth = ROOM_INSPECTIONS[0]?.length || headers.length;
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
-  sheet.getRange(4, 1, ROOM_INSPECTIONS.length, dataWidth).setValues(ROOM_INSPECTIONS);
+  if (!hasUserData_(sheet, 4)) {
+    sheet.getRange(4, 1, ROOM_INSPECTIONS.length, dataWidth).setValues(ROOM_INSPECTIONS);
+  }
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
   applyBodyStyle_(sheet.getRange(4, 1, 247, headers.length));
   sheet.getRange(3, 1, 248, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
@@ -523,6 +548,11 @@ function createActiveWorkOrdersSheet_(spreadsheet) {
   const headers = ['Ticket ID', 'Room/Location', 'Issue Type', 'Issue Description', 'Priority', 'Date Reported', 'Status', 'Notes/Updates'];
   applyTitle_(sheet, 'Active Work Orders', 'Track guest- or staff-reported issues that need immediate attention and follow-up.', headers.length);
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
+
+  // Capture the "new sheet" flag before writing the Ticket ID formula, which fills 247 rows
+  // and would otherwise cause hasUserData_ to return true even on a fresh sheet.
+  const isNewWorkOrderSheet = !hasUserData_(sheet, 4);
+
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
   applyBodyStyle_(sheet.getRange(4, 1, 247, headers.length));
   sheet.getRange(3, 1, 248, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
@@ -549,7 +579,7 @@ function createActiveWorkOrdersSheet_(spreadsheet) {
   sheet.getRange(4, 1, 247, 1).setFormulaR1C1('=IF(RC[6]<>"","WO-"&TEXT(ROW()-3,"000"),"")');
   sheet.getRange('A4:A250').setHorizontalAlignment('center');
 
-  if (WORK_ORDERS.length > 0) {
+  if (WORK_ORDERS.length > 0 && isNewWorkOrderSheet) {
     sheet.getRange(4, 2, WORK_ORDERS.length, WORK_ORDERS[0].length).setValues(WORK_ORDERS);
   }
 
@@ -567,17 +597,20 @@ function createInventorySheet_(spreadsheet) {
   const headers = ['Part ID', 'Category', 'Part Name', 'Equipment/Area', 'Vendor', 'Unit Cost', 'On Hand', 'Min Level', 'Reorder Qty', 'Lead Time (Days)', 'Reorder Status', 'Critical Item', 'Storage Location', 'Notes'];
   applyTitle_(sheet, 'Parts Inventory', 'Manage critical spares, reorder triggers, vendors, and storage locations.', headers.length);
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
-  sheet.getRange(4, 1, INVENTORY_ITEMS.length, headers.length).setValues(INVENTORY_ITEMS);
-  INVENTORY_ITEMS.forEach((_, index) => {
-    const row = index + 4;
+  if (!hasUserData_(sheet, 4)) {
+    sheet.getRange(4, 1, INVENTORY_ITEMS.length, headers.length).setValues(INVENTORY_ITEMS);
+  }
+  // Re-apply Reorder Status formula to every occupied data row (covers both seed data and user-added rows).
+  const lastInventoryRow = sheet.getLastRow();
+  for (let row = 4; row <= lastInventoryRow; row++) {
     sheet.getRange(row, 11).setFormula(`=IF(G${row}<=H${row},"Reorder","OK")`);
-  });
+  }
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
-  applyBodyStyle_(sheet.getRange(4, 1, INVENTORY_ITEMS.length, headers.length));
-  sheet.getRange(3, 1, INVENTORY_ITEMS.length + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
+  applyBodyStyle_(sheet.getRange(4, 1, Math.max(INVENTORY_ITEMS.length, lastInventoryRow - 3), headers.length));
+  sheet.getRange(3, 1, Math.max(INVENTORY_ITEMS.length, lastInventoryRow - 3) + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
   setColumnWidths_(sheet, [100, 110, 140, 140, 140, 90, 75, 75, 85, 110, 110, 90, 120, 240]);
   sheet.setFrozenRows(3);
-  sheet.getRange(3, 1, INVENTORY_ITEMS.length + 1, headers.length).createFilter();
+  sheet.getRange(3, 1, Math.max(INVENTORY_ITEMS.length, lastInventoryRow - 3) + 1, headers.length).createFilter();
   sheet.getRange('F4:F250').setNumberFormat('$#,##0.00');
 
   const lists = spreadsheet.getSheetByName('Lists');
@@ -594,13 +627,16 @@ function createTaskSheet_(spreadsheet, sheetName, title, subtitle, rows) {
   const headers = ['Task ID', 'Area', 'Task', 'Assigned To', 'Frequency', 'Due Day/Date', 'Est. Minutes', 'Status', 'Last Completed', 'Notes'];
   applyTitle_(sheet, title, subtitle, headers.length);
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
-  sheet.getRange(4, 1, rows.length, headers.length).setValues(rows);
+  if (!hasUserData_(sheet, 4)) {
+    sheet.getRange(4, 1, rows.length, headers.length).setValues(rows);
+  }
+  const dataRows = Math.max(rows.length, sheet.getLastRow() - 3);
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
-  applyBodyStyle_(sheet.getRange(4, 1, rows.length, headers.length));
-  sheet.getRange(3, 1, rows.length + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
+  applyBodyStyle_(sheet.getRange(4, 1, dataRows, headers.length));
+  sheet.getRange(3, 1, dataRows + 1, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
   setColumnWidths_(sheet, [90, 120, 340, 130, 90, 120, 90, 110, 110, 240]);
   sheet.setFrozenRows(3);
-  sheet.getRange(3, 1, rows.length + 1, headers.length).createFilter();
+  sheet.getRange(3, 1, dataRows + 1, headers.length).createFilter();
 
   const lists = spreadsheet.getSheetByName('Lists');
   const statusRule = SpreadsheetApp.newDataValidation().requireValueInRange(lists.getRange('D4:D7'), true).setAllowInvalid(false).build();
@@ -676,6 +712,105 @@ function createCarpetShampooSheet_(spreadsheet) {
       .whenTextEqualTo('Overdue').setBackground('#FFC7CE')
       .setRanges([sheet.getRange(4, 5, numRooms, 1)]).build()
   ]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLUSHMATE SNs sheet
+// Tracks Flushmate pressure-assist toilet unit serial numbers for each guest room.
+// Columns A-D: left half of property (Rooms 101–306).
+// Columns F-I: right half of property (Rooms 307–421).
+// Structural columns (Room #) are always refreshed; Model #, Serial #, and Install
+// Date columns are only populated when creating the sheet for the first time so that
+// user-entered serial numbers are preserved on future updates.
+// ─────────────────────────────────────────────────────────────────────────────
+function createFlushmateSnsSheet_(spreadsheet) {
+  const sheet = spreadsheet.getSheetByName('FLUSHMATE SNs');
+
+  const allRooms = CARPET_SHAMPOO_ROOMS.map((r) => r[1]);
+  const mid = Math.ceil(allRooms.length / 2);
+  const leftRooms = allRooms.slice(0, mid);
+  const rightRooms = allRooms.slice(mid);
+
+  // ─── TITLE ────────────────────────────────────────────────────
+  sheet.getRange(1, 1, 1, 9).merge()
+    .setValue('Flushmate Serial Number Log')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontSize(16)
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  sheet.setRowHeight(1, 40);
+
+  // ─── PROPERTY INFO ────────────────────────────────────────────
+  sheet.getRange(2, 1, 1, 4).merge()
+    .setValue('Fairfield Inn & Suites  ·  203 Outlet Dr., Hillsboro, TX 76645')
+    .setFontSize(10)
+    .setFontStyle('italic')
+    .setHorizontalAlignment('left')
+    .setVerticalAlignment('middle');
+  sheet.getRange(2, 6, 1, 4).merge()
+    .setValue('Contact: fairfield.maint.203@gmail.com  ·  (254) 582-8804')
+    .setFontSize(10)
+    .setFontStyle('italic')
+    .setHorizontalAlignment('right')
+    .setVerticalAlignment('middle');
+  sheet.setRowHeight(2, 24);
+
+  // ─── COLUMN HEADERS ───────────────────────────────────────────
+  // Left half: A=Room#, B=Model#, C=Serial#, D=Install Date | E=spacer | Right half: F=Room#, G=Model#, H=Serial#, I=Install Date
+  const leftHeaders = ['Room #', 'Model #', 'Serial #', 'Install Date'];
+  const rightHeaders = ['Room #', 'Model #', 'Serial #', 'Install Date'];
+  sheet.getRange(4, 1, 1, 4).setValues([leftHeaders]);
+  sheet.getRange(4, 6, 1, 4).setValues([rightHeaders]);
+  applyHeaderStyle_(sheet.getRange(4, 1, 1, 4));
+  applyHeaderStyle_(sheet.getRange(4, 6, 1, 4));
+  sheet.setRowHeight(4, 26);
+
+  // ─── ROOM NUMBER COLUMNS (always refreshed) ───────────────────
+  const dataStartRow = 5;
+  leftRooms.forEach((room, i) => {
+    sheet.getRange(dataStartRow + i, 1).setValue(room).setHorizontalAlignment('center');
+  });
+  rightRooms.forEach((room, i) => {
+    sheet.getRange(dataStartRow + i, 6).setValue(room).setHorizontalAlignment('center');
+  });
+
+  // ─── DATA COLUMNS (only on first build; preserved on refresh) ─
+  // Column B/C/D and G/H/I contain user-entered serial number data.
+  if (!hasUserData_(sheet, dataStartRow)) {
+    // Initialize data columns with empty strings for left and right halves.
+    const emptyLeft = leftRooms.map(() => ['', '', '']);
+    const emptyRight = rightRooms.map(() => ['', '', '']);
+    sheet.getRange(dataStartRow, 2, leftRooms.length, 3).setValues(emptyLeft);
+    sheet.getRange(dataStartRow, 7, rightRooms.length, 3).setValues(emptyRight);
+  }
+
+  // ─── FORMATTING ───────────────────────────────────────────────
+  const maxRows = Math.max(leftRooms.length, rightRooms.length);
+  applyBodyStyle_(sheet.getRange(dataStartRow, 1, maxRows, 4));
+  applyBodyStyle_(sheet.getRange(dataStartRow, 6, maxRows, 4));
+
+  // Date format for Install Date columns
+  sheet.getRange(dataStartRow, 4, leftRooms.length, 1).setNumberFormat('yyyy-mm-dd');
+  sheet.getRange(dataStartRow, 9, rightRooms.length, 1).setNumberFormat('yyyy-mm-dd');
+
+  // Date validation for Install Date
+  const dateRule = SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(true).build();
+  sheet.getRange(dataStartRow, 4, leftRooms.length, 1).setDataValidation(dateRule);
+  sheet.getRange(dataStartRow, 9, rightRooms.length, 1).setDataValidation(dateRule);
+
+  // ─── SPACER COLUMN (E) ────────────────────────────────────────
+  sheet.setColumnWidth(5, 24);
+
+  setColumnWidths_(sheet, [70, 110, 130, 120]);
+  sheet.setColumnWidth(6, 70);
+  sheet.setColumnWidth(7, 110);
+  sheet.setColumnWidth(8, 130);
+  sheet.setColumnWidth(9, 120);
+
+  sheet.setFrozenRows(4);
+  sheet.setHiddenGridlines(true);
 }
 
 function createDashboardSheet_(spreadsheet) {
