@@ -1113,10 +1113,10 @@ function createDashboardSheet_(spreadsheet) {
       .setRanges([sheet.getRange('H8')]).build(),
     // Critical & High Priority list – Priority column
     SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo('Critical').setBackground('#FFC7CE').setFontColor('#C00000').setFontWeight('bold')
+      .whenTextEqualTo('Critical').setBackground('#FFC7CE').setFontColor('#C00000').setBold(true)
       .setRanges([sheet.getRange('C12:C16')]).build(),
     SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo('High').setBackground('#FFEB9C').setFontColor('#9C5700').setFontWeight('bold')
+      .whenTextEqualTo('High').setBackground('#FFEB9C').setFontColor('#9C5700').setBold(true)
       .setRanges([sheet.getRange('C12:C16')]).build(),
     // PM Status
     SpreadsheetApp.newConditionalFormatRule()
