@@ -6,12 +6,16 @@ const SHEET_ORDER = [
   'Daily Tasks',
   'Weekly Tasks',
   'Monthly Tasks',
+  'Carpet Shampoo',
   'Lists',
   'Room Inspection PM'
 ];
 
 const PM_CYCLE_DAYS = 30;
 const PM_UPCOMING_THRESHOLD_DAYS = 7;
+
+const CARPET_SHAMPOO_CYCLE_DAYS = 90;
+const CARPET_SHAMPOO_UPCOMING_THRESHOLD_DAYS = 14;
 
 const ROOM_INSPECTION_PM_SECTIONS = [
   {
@@ -157,6 +161,26 @@ const MONTHLY_TASKS = [
   ['M-004', 'Mechanical', 'Lubricate motors, bearings, and door hardware', 'Shift Engineer', 'Monthly', 'Last Week', 150, 'Not Started', '2026-06-26', 'Record used materials']
 ];
 
+const CARPET_SHAMPOO_ROOMS = [
+  ['Floor 1', '101'], ['Floor 1', '102'], ['Floor 1', '103'], ['Floor 1', '104'],
+  ['Floor 1', '105'], ['Floor 1', '106'], ['Floor 1', '107'], ['Floor 1', '121'],
+  ['Floor 2', '201'], ['Floor 2', '202'], ['Floor 2', '203'], ['Floor 2', '204'],
+  ['Floor 2', '205'], ['Floor 2', '206'], ['Floor 2', '207'], ['Floor 2', '208'],
+  ['Floor 2', '209'], ['Floor 2', '210'], ['Floor 2', '211'], ['Floor 2', '213'],
+  ['Floor 2', '214'], ['Floor 2', '215'], ['Floor 2', '216'], ['Floor 2', '217'],
+  ['Floor 2', '218'], ['Floor 2', '219'], ['Floor 2', '221'],
+  ['Floor 3', '301'], ['Floor 3', '302'], ['Floor 3', '303'], ['Floor 3', '304'],
+  ['Floor 3', '305'], ['Floor 3', '306'], ['Floor 3', '307'], ['Floor 3', '308'],
+  ['Floor 3', '309'], ['Floor 3', '310'], ['Floor 3', '311'], ['Floor 3', '313'],
+  ['Floor 3', '314'], ['Floor 3', '315'], ['Floor 3', '316'], ['Floor 3', '317'],
+  ['Floor 3', '318'], ['Floor 3', '319'], ['Floor 3', '321'],
+  ['Floor 4', '401'], ['Floor 4', '402'], ['Floor 4', '403'], ['Floor 4', '404'],
+  ['Floor 4', '405'], ['Floor 4', '406'], ['Floor 4', '407'], ['Floor 4', '408'],
+  ['Floor 4', '409'], ['Floor 4', '410'], ['Floor 4', '411'], ['Floor 4', '413'],
+  ['Floor 4', '414'], ['Floor 4', '415'], ['Floor 4', '416'], ['Floor 4', '417'],
+  ['Floor 4', '418'], ['Floor 4', '419'], ['Floor 4', '421']
+];
+
 const WORK_ORDER_LOCATIONS = [
   'Other',
   '101',
@@ -268,6 +292,7 @@ function buildFairfieldMaintenanceProject() {
   createTaskSheet_(spreadsheet, 'Daily Tasks', 'Daily Maintenance Tasks', 'Use this sheet to manage daily building checks, hotel operations walk-throughs, and shift handoffs.', DAILY_TASKS);
   createTaskSheet_(spreadsheet, 'Weekly Tasks', 'Weekly Maintenance Tasks', 'Use this sheet to plan recurring weekly preventive maintenance work.', WEEKLY_TASKS);
   createTaskSheet_(spreadsheet, 'Monthly Tasks', 'Monthly Maintenance Tasks', 'Use this sheet to track higher-touch preventive maintenance and inventory routines.', MONTHLY_TASKS);
+  createCarpetShampooSheet_(spreadsheet);
   createDashboardSheet_(spreadsheet);
   spreadsheet.setActiveSheet(spreadsheet.getSheetByName('Dashboard'));
   SpreadsheetApp.flush();
@@ -495,13 +520,13 @@ function createRoomInspectionsSheet_(spreadsheet) {
 
 function createActiveWorkOrdersSheet_(spreadsheet) {
   const sheet = spreadsheet.getSheetByName('Active Work Orders');
-  const headers = ['Ticket ID', 'Room/Location', 'Issue Type', 'Issue Description', 'Priority', 'Date Reported', 'Status'];
+  const headers = ['Ticket ID', 'Room/Location', 'Issue Type', 'Issue Description', 'Priority', 'Date Reported', 'Status', 'Notes/Updates'];
   applyTitle_(sheet, 'Active Work Orders', 'Track guest- or staff-reported issues that need immediate attention and follow-up.', headers.length);
   sheet.getRange(3, 1, 1, headers.length).setValues([headers]);
   applyHeaderStyle_(sheet.getRange(3, 1, 1, headers.length));
   applyBodyStyle_(sheet.getRange(4, 1, 247, headers.length));
   sheet.getRange(3, 1, 248, headers.length).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
-  setColumnWidths_(sheet, [110, 150, 130, 320, 100, 120, 150]);
+  setColumnWidths_(sheet, [110, 150, 130, 320, 100, 120, 150, 250]);
   sheet.setFrozenRows(3);
   sheet.getRange(3, 1, 248, headers.length).createFilter();
   sheet.setHiddenGridlines(true);
@@ -584,6 +609,72 @@ function createTaskSheet_(spreadsheet, sheetName, title, subtitle, rows) {
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Complete').setBackground('#C6EFCE').setRanges([sheet.getRange('H4:H250')]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('In Progress').setBackground('#FFEB9C').setRanges([sheet.getRange('H4:H250')]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Deferred').setBackground('#FFC7CE').setRanges([sheet.getRange('H4:H250')]).build()
+  ]);
+}
+
+function createCarpetShampooSheet_(spreadsheet) {
+  const sheet = spreadsheet.getSheetByName('Carpet Shampoo');
+  const headers = ['Floor', 'Room', 'Last Shampooed', 'Days Since', 'Shampoo Status', 'Performed By', 'Notes'];
+  const numCols = headers.length;
+  const numRooms = CARPET_SHAMPOO_ROOMS.length;
+
+  applyTitle_(
+    sheet,
+    'Carpet Shampoo Log',
+    `Track the last carpet shampoo date for each guest room. Target cycle: ${CARPET_SHAMPOO_CYCLE_DAYS} days. Status turns "Due Soon" within ${CARPET_SHAMPOO_UPCOMING_THRESHOLD_DAYS} days of the cycle end.`,
+    numCols
+  );
+
+  sheet.getRange(3, 1, 1, numCols).setValues([headers]);
+  applyHeaderStyle_(sheet.getRange(3, 1, 1, numCols));
+
+  // Write floor and room values (columns A and B)
+  sheet.getRange(4, 1, numRooms, 2).setValues(CARPET_SHAMPOO_ROOMS);
+
+  // Days Since formula (column D): how many days ago was the last shampoo
+  sheet.getRange(4, 4, numRooms, 1).setFormulaR1C1('=IF(RC[-1]="","",TODAY()-RC[-1])');
+
+  // Shampoo Status formula (column E)
+  const cycleEnd = CARPET_SHAMPOO_CYCLE_DAYS;
+  const dueSoonStart = CARPET_SHAMPOO_CYCLE_DAYS - CARPET_SHAMPOO_UPCOMING_THRESHOLD_DAYS;
+  sheet.getRange(4, 5, numRooms, 1).setFormulaR1C1(
+    `=IF(RC[-1]="","",IF(RC[-1]>=${cycleEnd},"Overdue",IF(RC[-1]>=${dueSoonStart},"Due Soon","Current")))`
+  );
+
+  applyBodyStyle_(sheet.getRange(4, 1, numRooms, numCols));
+  sheet.getRange(4, 1, numRooms, numCols).setVerticalAlignment('top');
+
+  // Format Last Shampooed as a date; Days Since as a plain integer
+  sheet.getRange(4, 3, numRooms, 1).setNumberFormat('yyyy-mm-dd');
+  sheet.getRange(4, 4, numRooms, 1).setNumberFormat('0').setHorizontalAlignment('center');
+  sheet.getRange(4, 5, numRooms, 1).setHorizontalAlignment('center');
+  sheet.getRange(4, 1, numRooms, 2).setHorizontalAlignment('center');
+
+  // Date validation for Last Shampooed column
+  sheet.getRange(4, 3, numRooms, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build()
+  );
+
+  sheet.getRange(3, 1, numRooms + 1, numCols).applyRowBanding(SpreadsheetApp.BandingTheme.BLUE);
+  sheet.getRange(3, 1, numRooms + 1, numCols).createFilter();
+
+  setColumnWidths_(sheet, [100, 80, 140, 95, 120, 150, 280]);
+  sheet.setFrozenRows(3);
+  sheet.setHiddenGridlines(true);
+  sheet.setRowHeight(1, 28);
+  sheet.setRowHeight(2, 52);
+  sheet.setRowHeight(3, 28);
+
+  sheet.setConditionalFormatRules([
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Current').setBackground('#C6EFCE')
+      .setRanges([sheet.getRange(4, 5, numRooms, 1)]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Due Soon').setBackground('#FFEB9C')
+      .setRanges([sheet.getRange(4, 5, numRooms, 1)]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Overdue').setBackground('#FFC7CE')
+      .setRanges([sheet.getRange(4, 5, numRooms, 1)]).build()
   ]);
 }
 
